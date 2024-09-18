@@ -120,7 +120,7 @@ class Sokoban
         Image assetImage = Raylib.LoadImage(TEXTURE);
 		unsafe
 		{
-			Raylib.ImageResize(&assetImage, assetImage.Width*SCALE, assetImage.Height*SCALE);
+			Raylib.ImageResizeNN(&assetImage, assetImage.Width*SCALE, assetImage.Height*SCALE);
 		}
 		texture = Raylib.LoadTextureFromImage(assetImage);
 		Raylib.UnloadImage(assetImage);
