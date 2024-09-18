@@ -99,6 +99,10 @@ class Sokoban
 				Animator.PlayOrPause();
                 Raylib.SetWindowTitle("Воспроизведение пути");
             }
+			if (Raylib.IsKeyPressed(KeyboardKey.R))
+			{
+				InitMap();
+			}
 
             if (map.Complete())
 			{
@@ -125,16 +129,25 @@ class Sokoban
 		texture = Raylib.LoadTextureFromImage(assetImage);
 		Raylib.UnloadImage(assetImage);
 
+		InitMap();
+	}
+
+	public static void InitMap()
+	{
         map = new Map();
         map.offsetX = BLOCK_SIZE;
-		map.offsetY = BLOCK_SIZE;
+        map.offsetY = BLOCK_SIZE;
 
-		map.Load(new int[,] {
-			{ 1, 1, 1, },
-			{ 1, 5, 1, },
-			{ 1, 1, 1, },
-        });
-	}
+        string[] lines = File.ReadAllLines(@"../../../levels/level2.txt");
+        int[,] result = new int[lines.Length, lines[0].Length];
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var cols = lines[i].ToCharArray().Select(c => int.Parse(c.ToString())).ToArray();
+            for (int j = 0; j < cols.Length; j++)
+                result[i, j] = cols[j];
+        }
+        map.Load(result);
+    }
 
 	public static void LoadFile(FilePathList files)
 	{
