@@ -52,14 +52,12 @@ class Sokoban
 				var files = Raylib.GetDroppedFiles();
 				if (files.Length == 1)
 				{
-					LoadFile(files[0]);
+					LoadMap(files[0]);
 				}
 				else
 				{
 					Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
 				}
-				//Raylib.Drop
-				//Raylib.UnloadDroppedFiles(files);
 			}
 			if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
 			{
@@ -125,59 +123,41 @@ class Sokoban
         Image assetImage = Raylib.LoadImage(TEXTURE);
 		unsafe
 		{
-			Raylib.ImageResize(&assetImage, assetImage.Width*SCALE, assetImage.Height*SCALE);
+			Raylib.ImageResizeNN(&assetImage, assetImage.Width*SCALE, assetImage.Height*SCALE);
 		}
 		texture = Raylib.LoadTextureFromImage(assetImage);
 		Raylib.UnloadImage(assetImage);
 
-		InitMap();
+		LoadMap(@"../../../levels/level2.txt");
 	}
 
-	public static void InitMap()
+	public static void LoadMap(string file)
 	{
         map = new Map();
-        map.offsetX = BLOCK_SIZE;
-        map.offsetY = BLOCK_SIZE;
+        map.x = BLOCK_SIZE;
+		map.y = BLOCK_SIZE;
+		map.filepath = file;
 
-        string[] lines = File.ReadAllLines(@"../../../levels/level2.txt");
+        string[] lines = File.ReadAllLines(file);
         int[,] result = new int[lines.Length, lines[0].Length];
         for (int i = 0; i < lines.Length; i++)
         {
-            var cols = lines[i].ToCharArray().Select(c => int.Parse(c.ToString())).ToArray();
+            var cols = lines[i].ToCharArray();
             for (int j = 0; j < cols.Length; j++)
-                result[i, j] = cols[j];
+                result[i, j] = cols[j] - '0';
         }
         map.Load(result);
     }
 
-	public static void LoadFile(string file)
-	{
-		int[,] m = new int[10, 10];
-		int row = 0;
-		int col = 0;
-		foreach (char b in File.ReadAllText(file))
+    public static void InitMap()
+    {
+		if (map.filepath is not null)
 		{
-			switch (b)
-			{
-				case (char)0:
-					goto End;
-				case '\r':
-					col = 0;
-					row++;
-					break;
-				case '\n':
-					break;
-				default:
-					m[row, col] = b - '0';
-					col++;
-					break;
-			}
+			LoadMap(map.filepath);
 		}
-	End:
-		map.Load(m);
-	}
+    }
 
-	public static void SwitchToFirstState()
+    public static void SwitchToFirstState()
 	{
 		currStateIdx = -1;
 		NextState();
@@ -202,11 +182,10 @@ class Sokoban
 
 class Map : ICloneable
 {
-	public int[,] map;
-	public int offsetX;
-	public int offsetY;
+	public int[,]? map;
 	public int x;
 	public int y;
+	public string? filepath;
 
 	public void Load(int[,] _map)
 	{
@@ -228,8 +207,8 @@ class Map : ICloneable
 
 	public void Draw()
 	{
-		int _x = x + offsetX;
-		int _y = y + offsetY;
+		int _x = x;
+		int _y = y;
 		for (int row = 0; row < map.GetLength(0); row++)
 		{
 			for (int col = 0; col < map.GetLength(1); col++)
@@ -255,9 +234,9 @@ class Map : ICloneable
 				_x += Sokoban.BLOCK_SIZE;
 			}
 			_y += Sokoban.BLOCK_SIZE;
-			_x = x + offsetX;
+			_x = x;
 		}
-		Sokoban.worker.Draw(x + offsetX, y + offsetY);
+		Sokoban.worker.Draw(x, y);
 	}
 
 	public int GetRowsNum()
@@ -383,8 +362,6 @@ class Map : ICloneable
 		m.map = (int[,])map.Clone();
 		m.x = x;
 		m.y = y;
-		m.offsetX = offsetX;
-		m.offsetY = offsetY;
         return m;
     }
 }
