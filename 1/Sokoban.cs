@@ -112,7 +112,7 @@ class Sokoban
         Raylib.CloseWindow();
     }
 
-    public void Init()
+    public static void Init()
     {
         Raylib.InitWindow(WIDTH, HEIGHT, "СИИ 1 лаба - игра Сокобан");
 
