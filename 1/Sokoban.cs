@@ -1,4 +1,5 @@
 ﻿using Raylib_cs;
+using System.Data;
 using System.Net;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -198,7 +199,7 @@ class Map : ICloneable
     public string? filepath;
     
     public Map() { }
-    public Map(int blockSize, string file)
+    public Map(int blockSize, string? file)
     {
         x = blockSize;
         y = blockSize;
@@ -375,6 +376,10 @@ class Map : ICloneable
 
     public object Clone()
     {
+        if (map is null)
+        {
+            throw new NoNullAllowedException("map is null");
+        }
         Map m = new Map(x, filepath);
         m.map = (int[,])map.Clone();
         return m;
