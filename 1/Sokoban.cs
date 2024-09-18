@@ -49,16 +49,17 @@ class Sokoban
 
 			if (Raylib.IsFileDropped())
 			{
-				FilePathList files = Raylib.LoadDroppedFiles();
-				if (files.Count == 1)
+				var files = Raylib.GetDroppedFiles();
+				if (files.Length == 1)
 				{
-					LoadFile(files);
+					LoadFile(files[0]);
 				}
 				else
 				{
 					Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
 				}
-				Raylib.UnloadDroppedFiles(files);
+				//Raylib.Drop
+				//Raylib.UnloadDroppedFiles(files);
 			}
 			if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
 			{
@@ -149,20 +150,12 @@ class Sokoban
         map.Load(result);
     }
 
-	public static void LoadFile(FilePathList files)
+	public static void LoadFile(string file)
 	{
-		string s = "";
-		unsafe
-		{
-			for (byte* j = files.Paths[0]; *j != 0; j++)
-			{
-				s += (char)*j;
-			}
-		}
 		int[,] m = new int[10, 10];
 		int row = 0;
 		int col = 0;
-		foreach (char b in File.ReadAllText(s))
+		foreach (char b in File.ReadAllText(file))
 		{
 			switch (b)
 			{
