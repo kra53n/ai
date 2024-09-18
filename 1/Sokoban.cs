@@ -1,6 +1,9 @@
 ﻿using Raylib_cs;
+using System.Net;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.InteropServices;
 using System.Text;
 
 class Sokoban
@@ -40,10 +43,23 @@ class Sokoban
         while (!Raylib.WindowShouldClose())
         {
             Raylib.BeginDrawing();
-            Raylib.ClearBackground(Color.Black);
+            Raylib.ClearBackground(new Color(0x18, 0x18, 0x18, 0xff));
 
             map.Draw();
 
+			if (Raylib.IsFileDropped())
+			{
+				FilePathList files = Raylib.LoadDroppedFiles();
+				if (files.Count == 1)
+				{
+					LoadFile(files);
+				}
+				else
+				{
+					Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
+				}
+				Raylib.UnloadDroppedFiles(files);
+			}
 			if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
 			{
 				worker.Up(map);
@@ -83,14 +99,6 @@ class Sokoban
 				Animator.PlayOrPause();
                 Raylib.SetWindowTitle("Воспроизведение пути");
             }
-            //if (Raylib.IsKeyPressed(KeyboardKey.I))
-            //{
-            //	breadthSearcher.PrintInfo();
-            //}
-            //if (Raylib.IsKeyPressed(KeyboardKey.O))
-            //{
-            //	depthSearcher.PrintInfo();
-            //}
 
             if (map.Complete())
 			{
@@ -118,47 +126,49 @@ class Sokoban
 		Raylib.UnloadImage(assetImage);
 
         map = new Map();
-        map.offsetX = 20;
-		map.offsetY = 100;
-
-		//map.Load(new int[,] {
-		// 	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-		// 	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-		// 	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-		// 	{ 1, 0, 0, 0, 0, 0, 0, 0, 3, 1 },
-		// 	{ 1, 0, 0, 0, 0, 0, 0, 0, 3, 1 },
-		// 	{ 1, 0, 4, 0, 0, 0, 0, 0, 3, 1 },
-		// 	{ 1, 0, 5, 2, 0, 0, 0, 0, 0, 1 },
-		// 	{ 1, 0, 2, 2, 0, 0, 0, 0, 0, 1 },
-		// 	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-		// 	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
-		// });
+        map.offsetX = BLOCK_SIZE;
+		map.offsetY = BLOCK_SIZE;
 
 		map.Load(new int[,] {
-			{ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
-			{ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
-			{ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
-			{ 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
-			{ 1, 0, 3, 1, 9, 9, 9, 9, 9, 9 },
-			{ 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
-			{ 1, 4, 0, 0, 0, 1, 9, 9, 9, 9 },
-			{ 1, 0, 0, 2, 5, 1, 9, 9, 9, 9 },
-			{ 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
-			{ 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 }
-		});
+			{ 1, 1, 1, },
+			{ 1, 5, 1, },
+			{ 1, 1, 1, },
+        });
+	}
 
-		//map.Load(new int[,] {
-		//	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		//	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		//	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		//	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		//	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		//	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		//	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, },
-		//	{ 0, 1, 5, 0, 0, 2, 0, 3, 1, 0, },
-		//	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, },
-		//	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		//});
+	public static void LoadFile(FilePathList files)
+	{
+		string s = "";
+		unsafe
+		{
+			for (byte* j = files.Paths[0]; *j != 0; j++)
+			{
+				s += (char)*j;
+			}
+		}
+		int[,] m = new int[10, 10];
+		int row = 0;
+		int col = 0;
+		foreach (char b in File.ReadAllText(s))
+		{
+			switch (b)
+			{
+				case (char)0:
+					goto End;
+				case '\r':
+					col = 0;
+					row++;
+					break;
+				case '\n':
+					break;
+				default:
+					m[row, col] = b - '0';
+					col++;
+					break;
+			}
+		}
+	End:
+		map.Load(m);
 	}
 
 	public static void SwitchToFirstState()

@@ -10,10 +10,11 @@ class Searcher
 
 	private ISequence<State> openNodes;
 	private ISequence<State> closeNodes;
+	private Type type;
 
-	public Searcher(Type type)
+	public Searcher(Type _type)
 	{
-		switch (type)
+		switch (_type)
 		{
 			case Type.Breadth:
 				openNodes = new QueueAdapter<State>();
@@ -26,10 +27,13 @@ class Searcher
 			default:
 				throw new Exception("type has not specified. Only Breadth and Depth values are possible");
 		}
+		type = _type;
 	}
 
 	public List<State>? Search()
 	{
+		Statistic statistic = new Statistic();
+
 		openNodes.Clear();
 		closeNodes.Clear();
 		openNodes.Push(new State(Sokoban.map, Sokoban.worker));
@@ -37,8 +41,10 @@ class Searcher
 		while (!openNodes.Empty())
 		{
 			State state = openNodes.Pop();
+			statistic.Collect(state, openNodes, closeNodes);
 			if (state.IsGoal())
 			{
+				statistic.Print(type);
 				return state.Unwrap();
 			}
 			closeNodes.Push(state);
@@ -125,12 +131,59 @@ class State
 	}
 }
 
+class Statistic
+{
+	private int iters = 0;
+	private int currOpenNodesNum = 0;
+	private int maxOpenNodesNum = 0;
+	private int currCloseNodesNum = 0;
+	private int maxCloseNodesNum = 0;
+	private int maxNodesNum = 0;
+	
+
+	public void Collect(State currState, ISequence<State> openNodes, ISequence<State> closeNodes)
+	{
+		iters++;
+		currOpenNodesNum = openNodes.Count();
+		currCloseNodesNum = closeNodes.Count();
+		maxOpenNodesNum = Math.Max(maxOpenNodesNum, currOpenNodesNum);
+		maxCloseNodesNum = Math.Max(maxCloseNodesNum, currCloseNodesNum);
+		maxNodesNum = Math.Max(maxNodesNum, currOpenNodesNum + currCloseNodesNum);
+	}
+
+	public void Print(Searcher.Type type)
+	{
+		string s = "\n\tРезультат поиска в ";
+		switch (type)
+		{
+			case Searcher.Type.Breadth:
+				s += "ширину";
+				break;
+			case Searcher.Type.Depth:
+				s += "глубину";
+				break;
+		}
+		s += "\n\n";
+		s += $"Итераций: {iters}\n";
+		s += $"Открытые узлы:\n";
+		s += $"\tКоличество при завершении: {currOpenNodesNum}\n";
+		s += $"\tМаксимальное количество: {maxOpenNodesNum}\n";
+		s += $"Закрыте узлы:\n";
+		s += $"\tКоличество при завершении: {currCloseNodesNum}\n";
+		s += $"\tМаксимальное количество: {maxCloseNodesNum}\n";
+		s += $"Максимальное количество хранимых в памяти узлов: {maxNodesNum}\n";
+		s += "\n";
+		Console.WriteLine(s);
+	}
+}
+
 interface ISequence<T>
 {
 	void Push(T item);
 	T Pop();
 	void Clear();
 	bool Empty();
+	int Count();
 	bool Contains(T item);
 }
 
@@ -156,6 +209,11 @@ class StackAdapter<T> : ISequence<T>
 	public bool Empty()
 	{
 		return stack.Count == 0;
+	}
+
+	public int Count()
+	{
+		return stack.Count;
 	}
 
 	public bool Contains(T item)
@@ -193,6 +251,11 @@ class QueueAdapter<T> : ISequence<T>
 	public bool Empty()
 	{
 		return queue.Count == 0;
+	}
+
+	public int Count()
+	{
+		return queue.Count;
 	}
 
 	public bool Contains(T item)
