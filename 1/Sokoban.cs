@@ -126,13 +126,13 @@ class Sokoban
 		Raylib.UnloadImage(assetImage);
 
         map = new Map();
-        map.offsetX = BLOCK_SIZE;
-		map.offsetY = BLOCK_SIZE;
+        map.x = BLOCK_SIZE;
+		map.y = BLOCK_SIZE;
 
 		map.Load(new int[,] {
-			{ 1, 1, 1, },
-			{ 1, 5, 1, },
-			{ 1, 1, 1, },
+			{ 1, 1, 1, 1, },
+			{ 1, 5, 3, 1, },
+			{ 1, 1, 1, 1, },
         });
 	}
 
@@ -197,8 +197,6 @@ class Sokoban
 class Map : ICloneable
 {
 	public int[,] map;
-	public int offsetX;
-	public int offsetY;
 	public int x;
 	public int y;
 
@@ -222,8 +220,8 @@ class Map : ICloneable
 
 	public void Draw()
 	{
-		int _x = x + offsetX;
-		int _y = y + offsetY;
+		int _x = x;
+		int _y = y;
 		for (int row = 0; row < map.GetLength(0); row++)
 		{
 			for (int col = 0; col < map.GetLength(1); col++)
@@ -249,9 +247,9 @@ class Map : ICloneable
 				_x += Sokoban.BLOCK_SIZE;
 			}
 			_y += Sokoban.BLOCK_SIZE;
-			_x = x + offsetX;
+			_x = x;
 		}
-		Sokoban.worker.Draw(x + offsetX, y + offsetY);
+		Sokoban.worker.Draw(x, y);
 	}
 
 	public int GetRowsNum()
@@ -377,8 +375,6 @@ class Map : ICloneable
 		m.map = (int[,])map.Clone();
 		m.x = x;
 		m.y = y;
-		m.offsetX = offsetX;
-		m.offsetY = offsetY;
         return m;
     }
 }
