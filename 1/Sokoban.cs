@@ -1,4 +1,4 @@
-﻿using Raylib_cs;
+using Raylib_cs;
 using System.Data;
 using System.Net;
 using System.Numerics;
@@ -53,7 +53,7 @@ class Sokoban
                 var files = Raylib.GetDroppedFiles();
                 if (files.Length == 1)
                 {
-                    LoadMap(files[0]);
+                    map.Load(LoadMapContentFromFile(files[0]));
                 }
                 else
                 {
@@ -125,7 +125,8 @@ class Sokoban
         texture = Raylib.LoadTextureFromImage(assetImage);
         Raylib.UnloadImage(assetImage);
 
-        LoadMap(new int[,]{
+        map = new Map(BLOCK_SIZE, BLOCK_SIZE);
+        map.Load(new int[,]{
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -139,33 +140,17 @@ class Sokoban
         });
     }
 
-    public static void LoadMap(int[,] map) 
+    public static int[,] LoadMapContentFromFile(string file)
     {
-        Sokoban.map = new Map{ x = BLOCK_SIZE };
-        Sokoban.map.Load(map);
-    }
-
-    public static void LoadMap(string file)
-    {
-        map = new Map(BLOCK_SIZE, file);
-
         string[] lines = File.ReadAllLines(file);
-        int[,] result = new int[lines.Length, lines[0].Length];
+        int[,] content = new int[lines.Length, lines[0].Length];
         for (int i = 0; i < lines.Length; i++)
         {
             var cols = lines[i].ToCharArray();
             for (int j = 0; j < cols.Length; j++)
-                result[i, j] = cols[j] - '0';
+                content[i, j] = cols[j] - '0';
         }
-        map.Load(result);
-    }
-
-    public static void InitMap()
-    {
-        if (map.filepath is not null)
-        {
-            LoadMap(map.filepath);
-        }
+        return content;
     }
 
     public static void SwitchToFirstState()
@@ -196,14 +181,11 @@ class Map : ICloneable
     public int[,]? map;
     public int x;
     public int y;
-    public string? filepath;
     
-    public Map() { }
-    public Map(int blockSize, string? file)
+    public Map(int _x, int _y)
     {
-        x = blockSize;
-        y = blockSize;
-        filepath = file;
+        x = _x;
+        y = _y;
     }
     public void Load(int[,] _map)
     {
@@ -380,7 +362,7 @@ class Map : ICloneable
         {
             throw new NoNullAllowedException("map is null");
         }
-        Map m = new Map(x, filepath);
+        Map m = new Map(x, y);
         m.map = (int[,])map.Clone();
         return m;
     }
