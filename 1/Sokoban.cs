@@ -1,10 +1,5 @@
 ﻿using Raylib_cs;
-using System.Net;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Data;
 
 class Sokoban
 {
@@ -25,7 +20,7 @@ class Sokoban
     private static Searcher breadthSearcher = new Searcher(Searcher.Type.Breadth);
     private static Searcher depthSearcher = new Searcher(Searcher.Type.Depth);
 
-    public enum Block: int
+    public enum Block : int
     {
         Floor = 0,
         Wall,
@@ -36,7 +31,7 @@ class Sokoban
         Empty = 9,
     };
 
-    static void Main()
+    public static void Main()
     {
         Init();
 
@@ -49,16 +44,15 @@ class Sokoban
 
             if (Raylib.IsFileDropped())
             {
-                FilePathList files = Raylib.LoadDroppedFiles();
-                if (files.Count == 1)
+                var files = Raylib.GetDroppedFiles();
+                if (files.Length == 1)
                 {
-                    LoadFile(files);
+                    map.Load(LoadMapContentFromFile(files[0]));
                 }
                 else
                 {
                     Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
                 }
-                Raylib.UnloadDroppedFiles(files);
             }
             if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
             {
@@ -84,7 +78,7 @@ class Sokoban
                 worker = baseState.worker;
                 states = breadthSearcher.Search();
                 Raylib.SetWindowTitle("Поиск в ширину завершён");
-                            }
+            }
             if (Raylib.IsKeyPressed(KeyboardKey.Two) && !Animator.Animating())
             {
                 Raylib.SetWindowTitle("Осуществляется поиск в глубину");
@@ -113,62 +107,45 @@ class Sokoban
         Raylib.CloseWindow();
     }
 
-    static void Init()
+    public static void Init()
     {
         Raylib.InitWindow(WIDTH, HEIGHT, "СИИ 1 лаба - игра Сокобан");
 
         Image assetImage = Raylib.LoadImage(TEXTURE);
         unsafe
         {
-            Raylib.ImageResizeNN(&assetImage, assetImage.Width*SCALE, assetImage.Height*SCALE);
+            Raylib.ImageResizeNN(&assetImage, assetImage.Width * SCALE, assetImage.Height * SCALE);
         }
         texture = Raylib.LoadTextureFromImage(assetImage);
         Raylib.UnloadImage(assetImage);
 
-        map = new Map();
-        map.x = BLOCK_SIZE;
-        map.y = BLOCK_SIZE;
-
+        map = new Map(BLOCK_SIZE, BLOCK_SIZE);
         map.Load(new int[,] {
-            { 1, 1, 1, 1, },
-            { 1, 5, 3, 1, },
-            { 1, 1, 1, 1, },
-        });
+            { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
+            { 1, 0, 3, 1, 9, 9, 9, 9, 9, 9 },
+            { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
+            { 1, 4, 0, 0, 0, 1, 9, 9, 9, 9 },
+            { 1, 0, 0, 2, 5, 1, 9, 9, 9, 9 },
+            { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
+            { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
+            { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
+            { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
+            { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 }
+            }
+        );
     }
 
-    public static void LoadFile(FilePathList files)
+    public static int[,] LoadMapContentFromFile(string file)
     {
-        string s = "";
-        unsafe
+        string[] lines = File.ReadAllLines(file);
+        int[,] content = new int[lines.Length, lines[0].Length];
+        for (int i = 0; i < lines.Length; i++)
         {
-            for (byte* j = files.Paths[0]; *j != 0; j++)
-            {
-                s += (char)*j;
-            }
+            var cols = lines[i].ToCharArray();
+            for (int j = 0; j < cols.Length; j++)
+                content[i, j] = cols[j] - '0';
         }
-        int[,] m = new int[10, 10];
-        int row = 0;
-        int col = 0;
-        foreach (char b in File.ReadAllText(s))
-        {
-            switch (b)
-            {
-                case (char)0:
-                    goto End;
-                case '\r':
-                    col = 0;
-                    row++;
-                    break;
-                case '\n':
-                    break;
-                default:
-                    m[row, col] = b - '0';
-                    col++;
-                    break;
-            }
-        }
-    End:
-        map.Load(m);
+        return content;
     }
 
     public static void SwitchToFirstState()
@@ -196,10 +173,15 @@ class Sokoban
 
 class Map : ICloneable
 {
-    public int[,] map;
+    public int[,]? map;
     public int x;
     public int y;
-
+    
+    public Map(int _x, int _y)
+    {
+        x = _x;
+        y = _y;
+    }
     public void Load(int[,] _map)
     {
         map = _map;
@@ -371,10 +353,12 @@ class Map : ICloneable
 
     public object Clone()
     {
-        Map m = new Map();
+        if (map is null)
+        {
+            throw new NoNullAllowedException("map is null");
+        }
+        Map m = new Map(x, y);
         m.map = (int[,])map.Clone();
-        m.x = x;
-        m.y = y;
         return m;
     }
 }
