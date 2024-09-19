@@ -1,5 +1,6 @@
 ﻿using Raylib_cs;
 using System.Data;
+using System.Diagnostics;
 
 class Sokoban
 {
@@ -53,6 +54,10 @@ class Sokoban
                 {
                     Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
                 }
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.E))
+            {
+                Process.Start("explorer.exe", Directory.GetCurrentDirectory());
             }
             if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
             {
@@ -119,7 +124,7 @@ class Sokoban
         texture = Raylib.LoadTextureFromImage(assetImage);
         Raylib.UnloadImage(assetImage);
 
-        map = new Map(BLOCK_SIZE, BLOCK_SIZE);
+        map = new Map(0, 0);
         map.Load(new int[,] {
             { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
             { 1, 0, 3, 1, 9, 9, 9, 9, 9, 9 },
@@ -131,8 +136,7 @@ class Sokoban
             { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
             { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
             { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 }
-            }
-        );
+        });
     }
 
     public static int[,] LoadMapContentFromFile(string file)
