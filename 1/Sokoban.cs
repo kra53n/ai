@@ -1,11 +1,7 @@
 ﻿using Raylib_cs;
 using System.Data;
-using System.Net;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Diagnostics;
+using static Worker;
 
 class Sokoban
 {
@@ -53,12 +49,16 @@ class Sokoban
                 var files = Raylib.GetDroppedFiles();
                 if (files.Length == 1)
                 {
-                    LoadMap(files[0]);
+                    map.Load(LoadMapContentFromFile(files[0]));
                 }
                 else
                 {
                     Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
                 }
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.E))
+            {
+                Process.Start("explorer.exe", Directory.GetCurrentDirectory());
             }
             if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
             {
@@ -125,47 +125,32 @@ class Sokoban
         texture = Raylib.LoadTextureFromImage(assetImage);
         Raylib.UnloadImage(assetImage);
 
-        LoadMap(new int[,]{
-            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-            { 0, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-            { 0, 1, 5, 0, 0, 2, 0, 3, 1, 0 },
-            { 0, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+        map = new Map(0, 0);
+        map.Load(new int[,] {
+            { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
+            { 1, 0, 3, 1, 9, 9, 9, 9, 9, 9 },
+            { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
+            { 1, 4, 0, 0, 0, 1, 9, 9, 9, 9 },
+            { 1, 0, 0, 2, 5, 1, 9, 9, 9, 9 },
+            { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
+            { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
+            { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
+            { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
+            { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 }
         });
     }
 
-    public static void LoadMap(int[,] map) 
+    public static int[,] LoadMapContentFromFile(string file)
     {
-        Sokoban.map = new Map{ x = BLOCK_SIZE };
-        Sokoban.map.Load(map);
-    }
-
-    public static void LoadMap(string file)
-    {
-        map = new Map(BLOCK_SIZE, file);
-
         string[] lines = File.ReadAllLines(file);
-        int[,] result = new int[lines.Length, lines[0].Length];
+        int[,] content = new int[lines.Length, lines[0].Length];
         for (int i = 0; i < lines.Length; i++)
         {
             var cols = lines[i].ToCharArray();
             for (int j = 0; j < cols.Length; j++)
-                result[i, j] = cols[j] - '0';
+                content[i, j] = cols[j] - '0';
         }
-        map.Load(result);
-    }
-
-    public static void InitMap()
-    {
-        if (map.filepath is not null)
-        {
-            LoadMap(map.filepath);
-        }
+        return content;
     }
 
     public static void SwitchToFirstState()
@@ -196,14 +181,11 @@ class Map : ICloneable
     public int[,]? map;
     public int x;
     public int y;
-    public string? filepath;
     
-    public Map() { }
-    public Map(int blockSize, string? file)
+    public Map(int _x, int _y)
     {
-        x = blockSize;
-        y = blockSize;
-        filepath = file;
+        x = _x;
+        y = _y;
     }
     public void Load(int[,] _map)
     {
@@ -380,7 +362,7 @@ class Map : ICloneable
         {
             throw new NoNullAllowedException("map is null");
         }
-        Map m = new Map(x, filepath);
+        Map m = new Map(x, y);
         m.map = (int[,])map.Clone();
         return m;
     }
@@ -438,6 +420,24 @@ class Wall
     }
 }
 
+
+static class DirectionMethods
+{
+    public static int GetX(this Direction dir)
+    {
+        if (dir == Direction.Left) return -1;
+        if (dir == Direction.Right) return 1;
+        return 0;
+    }    
+
+    public static int GetY(this Direction dir)
+    {
+        if (dir == Direction.Down) return -1;
+        if (dir == Direction.Up) return 1;
+        return 0;
+    }
+}
+
 class Worker : ICloneable
 {
     static int TEXTURE_POS = 5;
@@ -451,7 +451,7 @@ class Worker : ICloneable
         Down,
         Right,
     }
-
+   
     public static readonly Direction[] directions = { Direction.Up, Direction.Left, Direction.Down, Direction.Right };
 
     public Worker(int _x, int _y)
