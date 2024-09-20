@@ -205,6 +205,20 @@ class Map : ICloneable
         Sokoban.baseState = new State((Map)this.Clone(), (Worker)Sokoban.worker.Clone());
     }
 
+    public IEnumerable<Tuple<int, int>> FindBlocks(Sokoban.Block block)
+    {
+        for (int row = 0; row < GetRowsNum(); row++)
+        {
+            for (int col = 0; col < GetColsNum(); col++)
+            {
+                if (map[row, col] == (int)block)
+                {
+                    yield return new(col, row);
+                }
+            }
+        }
+    }
+
     public void Draw()
     {
         int _x = x;
