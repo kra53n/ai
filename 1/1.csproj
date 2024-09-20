@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\2\Bidirectional Search.cs" Link="Bidirectional Search.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Raylib-cs" Version="6.1.1" />
   </ItemGroup>
 
