@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 using System.Data;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using static Worker;
 
 class Sokoban
@@ -8,19 +9,17 @@ class Sokoban
     public const string TEXTURE = "../../../assets.png";
     public const int WIDTH = 800;
     public const int HEIGHT = 800;
-    public const int SCALE = 2;
+    public const int SCALE = 1;
     public const int BLOCK_SIZE = 32 * SCALE;
     public const double ANIMATION_DELAY = 0.5;
 
+    public static Mode mode = Mode.Game;
     public static Texture2D texture;
     public static Map map;
     public static Worker worker = new Worker(0, 0);
     public static State? baseState = null;
     public static List<State>? states = null;
     public static int currStateIdx = 0;
-
-    private static Searcher breadthSearcher = new Searcher(Searcher.Type.Breadth);
-    private static Searcher depthSearcher = new Searcher(Searcher.Type.Depth);
 
     public enum Block : int
     {
@@ -29,88 +28,126 @@ class Sokoban
         Box,
         Mark,
         BoxOnMark,
-        Player,
+        Worker,
         Empty = 9,
     };
+
+    public enum Mode
+    {
+        Game,
+        Edit,
+    }
 
     public static void Main()
     {
         Init();
+
+        Raylib.SetTargetFPS(60);
 
         while (!Raylib.WindowShouldClose())
         {
             Raylib.BeginDrawing();
             Raylib.ClearBackground(new Color(0x18, 0x18, 0x18, 0xff));
 
-            map.Draw();
-
-            if (Raylib.IsFileDropped())
+            switch (mode)
             {
-                var files = Raylib.GetDroppedFiles();
-                if (files.Length == 1)
-                {
-                    map.Load(LoadMapContentFromFile(files[0]));
-                }
-                else
-                {
-                    Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
-                }
+                case Mode.Game:
+                    map.Draw();
+                    Update();
+                    break;
+                case Mode.Edit:
+                    Editor.Draw();
+                    Editor.Update();
+                    break;
             }
-            if (Raylib.IsKeyPressed(KeyboardKey.E))
-            {
-                Process.Start("explorer.exe", Directory.GetCurrentDirectory());
-            }
-            if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
-            {
-                worker.Up(map);
-            }
-            if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
-            {
-                worker.Left(map);
-            }
-            if (Raylib.IsKeyPressed(KeyboardKey.S) || Raylib.IsKeyPressed(KeyboardKey.Down))
-            {
-                worker.Down(map);
-            }
-            if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
-            {
-                worker.Right(map);
-            }
-            if (Raylib.IsKeyPressed(KeyboardKey.One) && !Animator.Animating())
-            {
-                Raylib.SetWindowTitle("Осуществляется поиск в ширину");
-                currStateIdx = 0;
-                map = baseState.map;
-                worker = baseState.worker;
-                states = breadthSearcher.Search();
-                Raylib.SetWindowTitle("Поиск в ширину завершён");
-            }
-            if (Raylib.IsKeyPressed(KeyboardKey.Two) && !Animator.Animating())
-            {
-                Raylib.SetWindowTitle("Осуществляется поиск в глубину");
-                currStateIdx = 0;
-                map = baseState.map;
-                worker = baseState.worker;
-                states = depthSearcher.Search();
-                Raylib.SetWindowTitle("Поиск в глубину завершён");
-            }
-            if (Raylib.IsKeyPressed(KeyboardKey.Space))
-            {
-                Animator.PlayOrPause();
-                Raylib.SetWindowTitle("Воспроизведение пути");
-            }
-
-            if (map.Complete())
-            {
-                Raylib.SetWindowTitle("Игра пройдена");
-            }
-
-            Animator.Animate();
 
             Raylib.EndDrawing();
         }
 
         Raylib.CloseWindow();
+    }
+
+    public static void Update()
+    {
+        if (Raylib.IsKeyPressed(KeyboardKey.E))
+        {
+            mode = Mode.Edit;
+        }
+
+        if (Raylib.IsFileDropped())
+        {
+            var files = Raylib.GetDroppedFiles();
+            if (files.Length == 1)
+            {
+                map.Load(LoadMapContentFromFile(files[0]));
+            }
+            else
+            {
+                Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
+            }
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.F))
+        {
+            Process.Start("explorer.exe", Directory.GetCurrentDirectory());
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
+        {
+            worker.Up(map);
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
+        {
+            worker.Left(map);
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.S) || Raylib.IsKeyPressed(KeyboardKey.Down))
+        {
+            worker.Down(map);
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
+        {
+            worker.Right(map);
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.One) && !Animator.Animating())
+        {
+            Raylib.SetWindowTitle("Осуществляется поиск в ширину");
+            currStateIdx = 0;
+            map = baseState.map;
+            worker = baseState.worker;
+            states = new Searcher(Searcher.Type.Breadth).Search();
+            Raylib.SetWindowTitle("Поиск в ширину завершён");
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.Two) && !Animator.Animating())
+        {
+            Raylib.SetWindowTitle("Осуществляется поиск в глубину");
+            currStateIdx = 0;
+            map = baseState.map;
+            worker = baseState.worker;
+            states = new Searcher(Searcher.Type.Depth).Search();
+            Raylib.SetWindowTitle("Поиск в глубину завершён");
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.Three) && !Animator.Animating())
+        {
+            Raylib.SetWindowTitle("Осуществляется поиск с итеративным углублением");
+            currStateIdx = 0;
+            map = baseState.map;
+            worker = baseState.worker;
+            states = new DepthFirstSearch().Search();
+            Raylib.SetWindowTitle("Поиск в глубину с итеративным углеблением завершён");
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.Four) && !Animator.Animating())
+        {
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.Space))
+        {
+            Animator.PlayOrPause();
+            Raylib.SetWindowTitle("Воспроизведение пути");
+        }
+
+        if (map.Complete())
+        {
+            Raylib.SetWindowTitle("Игра пройдена");
+        }
+
+        Animator.Animate();
     }
 
     public static void Init()
@@ -194,7 +231,7 @@ class Map : ICloneable
         {
             for (int col = 0; col < GetColsNum(); col++)
             {
-                if (GetCell(row, col) == (int)Sokoban.Block.Player)
+                if (GetCell(row, col) == (int)Sokoban.Block.Worker)
                 {
                     Sokoban.worker = new Worker(col, row);
                     SetCell(row, col, (int)Sokoban.Block.Floor);
@@ -297,7 +334,7 @@ class Map : ICloneable
     {
         if (
             worker.x == 0 || worker.y == 0 ||
-            worker.x == map.GetLength(0)-1 || worker.y == map.GetLength(1)-1 ||
+            worker.x == map.GetLength(1)-1 || worker.y == map.GetLength(0)-1 ||
             GetCell(worker.y, worker.x) == (int)Sokoban.Block.Wall
         )
         {
@@ -490,6 +527,11 @@ class Worker : ICloneable
             ),
             Color.White
         );
+    }
+
+    public static void DrawStatic(int x, int y)
+    {
+        Raylib.DrawTextureRec(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y), Color.White);
     }
 
     public void Move(Map map, Direction direction)
