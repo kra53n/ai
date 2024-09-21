@@ -16,29 +16,31 @@ partial class State
         {
             Map m = (Map)map.Clone();
             Worker w = (Worker)worker.Clone();
-            var wXNew = w.x + direction.GetX();
-            var wYNew = w.y + direction.GetY();
-            var checkBoxX = w.x - direction.GetX();
-            var checkBoxY = w.y - direction.GetY();
-            if (m.GetCell(wXNew, wYNew) == (int)Sokoban.Block.Box || m.GetCell(wXNew, wYNew) == (int)Sokoban.Block.BoxOnMark || m.GetCell(w.y, w.x) != (int)Sokoban.Block.Wall)
+            var wRowNew = w.y + direction.GetY(); 
+            var wColNew = w.x + direction.GetX();
+            var checkBoxRow = w.y - direction.GetY();
+            var checkBoxCol = w.x - direction.GetX();
+            if (m.GetCell(wRowNew, wColNew) != (int)Sokoban.Block.Floor && m.GetCell(wRowNew, wColNew) != (int)Sokoban.Block.Mark)
             {
                 continue;
             }
             w.Move(m, direction);
             yield return new State(m, w);
-            if (m.GetCell(checkBoxX, checkBoxY) == (int)Sokoban.Block.BoxOnMark)
+            m = (Map)m.Clone();
+            w = (Worker)w.Clone();
+            if (m.GetCell(checkBoxRow, checkBoxCol) == (int)Sokoban.Block.BoxOnMark)
             {
-                m.SetCell(checkBoxX, checkBoxY, (int)Sokoban.Block.Mark);
+                m.SetCell(checkBoxRow, checkBoxCol, (int)Sokoban.Block.Mark);
             }
-            else if (m.GetCell(checkBoxX, checkBoxY) == (int)Sokoban.Block.Box)
+            else if (m.GetCell(checkBoxRow, checkBoxCol) == (int)Sokoban.Block.Box)
             {
-                m.SetCell(checkBoxX, checkBoxY, (int)Sokoban.Block.Floor);
+                m.SetCell(checkBoxRow, checkBoxCol, (int)Sokoban.Block.Floor);
             } 
             else
             {
                 continue;
             }
-            m.SetCell(w.x - direction.GetX(), w.y - direction.GetY(), (int)Sokoban.Block.Box);
+            m.SetCell(w.y - direction.GetY(), w.x - direction.GetX(), (int)Sokoban.Block.Box);
             yield return new State(m, w);
         }
     }
@@ -47,94 +49,112 @@ partial class State
 
 class BidirectionalSearch
 {
-    public List<State>? Search()
+    private Statistic? statistic;
+    private QueueAdapter<State>? openNodes;
+    private QueueAdapter<State>? openNodesReversed;
+    private QueueAdapter<State>? closedNodes;
+    private QueueAdapter<State>? closedNodesReversed;
+    private void NormalIteration()
     {
-        Statistic statistic = new Statistic();
-
-        QueueAdapter<State> openNodes = new(), openNodesReversed = new(), closedNodes = new(), closedNodesReversed = new();
-
-        openNodes.Push(new State(Sokoban.map, Sokoban.worker));
-        foreach (var state in GenerateFinalStates(Sokoban.map, Sokoban.worker))
-        {
-            openNodesReversed.Push(state);
-        }
-
-        while (true)
+        QueueAdapter<State> newO = new();
+        while (!openNodes.Empty())
         {
             State state = openNodes.Pop();
             statistic.Collect(state, openNodes, closedNodes);
             closedNodes.Push(state);
             foreach (State s in state.GetGeneratedStates())
             {
-                if (!openNodes.Contains(s) && !closedNodes.Contains(s))
+                if (!openNodes.Contains(s) && !newO.Contains(s) && !closedNodes.Contains(s))
                 {
                     s.prv = state;
-                    openNodes.Push(s);
+                    newO.Push(s);
                 }
             }
+        }
+        openNodes = newO;
+    }
 
-            state = openNodesReversed.Pop();
+    private List<State>? ReversedIteration()
+    {
+        QueueAdapter<State> newO = new();
+        while (!openNodesReversed.Empty())
+        {
+            State state = openNodesReversed.Pop();
             statistic.Collect(state, openNodesReversed, closedNodesReversed);
 
             closedNodesReversed.Push(state);
             foreach (State s in state.GenerateReversedStates())
             {
                 var item = openNodes.GetItem(s);
+                if (item == null) {
+                    item = closedNodes.GetItem(s);
+                }
                 if (item != null)
                 {
-                    state.prv = item;
-                    
-                    State? curr = state;
-                    bool flag;
-                    do
-                    {
-                        flag = false;
-                        foreach (var st in closedNodesReversed)
-                        {
-                            if (st.prv == curr)
-                            {
-                                curr = st;
-                                flag = true;
-                            }
-                        }
-                    } while (flag);
-
                     statistic.Print(Searcher.Type.Breadth);
-                    return curr.Unwrap();
+                    List<State> l = state.Unwrap();
+                    l.Reverse();
+                    var res = item.Unwrap();
+                    res.AddRange(l);
+                    return res;
                 }
-
-                if (!openNodesReversed.Contains(s) && !closedNodesReversed.Contains(s))
+                if (!openNodesReversed.Contains(s) && !newO.Contains(s) && !closedNodesReversed.Contains(s))
                 {
-                    state.prv = s;
-                    openNodesReversed.Push(s);
+                    s.prv = state;
+                    newO.Push(s);
                 }
             }
         }
+        openNodesReversed = newO;
+        return null;
     }
 
-    private List<State> GenerateFinalStates(Map map, Worker worker)
+    public List<State>? Search()
     {
+        statistic = new();
+
+        openNodes = new();
+        openNodes.Push(new State(Sokoban.map, Sokoban.worker));
+        openNodesReversed = new(GenerateFinalStates(Sokoban.map, Sokoban.worker));
+        closedNodes = new();
+        closedNodesReversed = new();
+
+        while (true)
+        {
+            NormalIteration();
+            var result = ReversedIteration();
+            if (result != null)
+            {
+                return result;
+            }
+        };
+        
+    }
+
+    private List<State> GenerateFinalStates(Map m, Worker worker)
+    {
+        Map map = (Map)m.Clone();
         var states = new List<State>();
-        foreach ((int x, int y) in map.FindBlocks(Sokoban.Block.Box))
+        foreach ((int col, int row) in map.FindBlocks(Sokoban.Block.Box))
         {
-            map.SetCell(x, y, (int)Sokoban.Block.Floor);
+            map.SetCell(row, col, (int)Sokoban.Block.Floor);
         }
-        foreach ((int x, int y) in map.FindBlocks(Sokoban.Block.Mark))
+        foreach ((int col, int row) in map.FindBlocks(Sokoban.Block.Mark))
         {
-            map.SetCell(x, y, (int)Sokoban.Block.BoxOnMark);
+            map.SetCell(row, col, (int)Sokoban.Block.BoxOnMark);
         }
 
-        foreach ((int x, int y) in map.FindBlocks(Sokoban.Block.BoxOnMark))
+        foreach ((int col, int row) in map.FindBlocks(Sokoban.Block.BoxOnMark))
         {
             foreach (Worker.Direction direction in Worker.directions)
             {
-                var checkFreeX = x + direction.GetX();
-                var checkFreeY = y + direction.GetY();
-                if (map.GetCell(checkFreeX, checkFreeY) == (int)Sokoban.Block.Floor)
+                var checkFreeRow = row + direction.GetY();
+                var checkFreeCol = col + direction.GetX();
+                if (map.GetCell(checkFreeRow, checkFreeCol) == (int)Sokoban.Block.Floor || map.GetCell(checkFreeRow, checkFreeCol) == (int)Sokoban.Block.Mark)
                 {
                     Worker w = (Worker)worker.Clone();
-                    w.x = checkFreeX;
-                    w.y = checkFreeY;
+                    w.x = checkFreeCol;
+                    w.y = checkFreeRow;
                     states.Add(new State((Map)map.Clone(), w));
                 }
             }
