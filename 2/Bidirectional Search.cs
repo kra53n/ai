@@ -2,19 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 
-class BidirectionalSearch
+
+partial class State
 {
-    private List<State> GenerateStates(State state)
+    private List<State> GenerateReversedStates()
     {
         var states = new List<State>();
 
         foreach (Worker.Direction direction in Worker.directions)
         {
-            Map m = (Map)state.map.Clone();
-            Worker w = (Worker)state.worker.Clone();
+            Map m = (Map)map.Clone();
+            Worker w = (Worker)worker.Clone();
             var wXNew = w.x + direction.GetX();
             var wYNew = w.y + direction.GetY();
             var checkBoxX = w.x - direction.GetX();
@@ -44,3 +46,30 @@ class BidirectionalSearch
     }
 }
 
+
+class BidirectionalSearch
+{
+    
+
+    private List<State> GenerateFinalStates(Map map, Worker worker)
+    {
+        var states = new List<State>();
+        foreach ((int x, int y) in map.FindBlocks(Sokoban.Block.BoxOnMark))
+        {
+            foreach (Worker.Direction direction in Worker.directions)
+            {
+                var checkFreeX = x + direction.GetX();
+                var checkFreeY = y + direction.GetY();
+                if (map.GetCell(checkFreeX, checkFreeY) == (int)Sokoban.Block.Floor)
+                {
+                    Worker w = (Worker)worker.Clone();
+                    w.x = checkFreeX;
+                    w.y = checkFreeY;
+                    states.Add(new State((Map)map.Clone(), w));
+                }
+            }
+        }
+        return states;
+    }
+
+}
