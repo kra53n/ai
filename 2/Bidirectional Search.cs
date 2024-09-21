@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -9,10 +10,8 @@ using System.Threading.Tasks;
 
 partial class State
 {
-    private List<State> GenerateReversedStates()
+    public IEnumerable<State> GenerateReversedStates()
     {
-        var states = new List<State>();
-
         foreach (Worker.Direction direction in Worker.directions)
         {
             Map m = (Map)map.Clone();
@@ -26,7 +25,7 @@ partial class State
                 continue;
             }
             w.Move(m, direction);
-            states.Add(new State(m, w));
+            yield return new State(m, w);
             if (m.GetCell(checkBoxX, checkBoxY) == (int)Sokoban.Block.BoxOnMark)
             {
                 m.SetCell(checkBoxX, checkBoxY, (int)Sokoban.Block.Mark);
@@ -40,20 +39,91 @@ partial class State
                 continue;
             }
             m.SetCell(w.x - direction.GetX(), w.y - direction.GetY(), (int)Sokoban.Block.Box);
-            states.Add(new State(m, w));
+            yield return new State(m, w);
         }
-        return states;
     }
 }
 
 
 class BidirectionalSearch
 {
-    
+    public List<State>? Search()
+    {
+        Statistic statistic = new Statistic();
+
+        QueueAdapter<State> openNodes = new(), openNodesReversed = new(), closedNodes = new(), closedNodesReversed = new();
+
+        openNodes.Push(new State(Sokoban.map, Sokoban.worker));
+        foreach (var state in GenerateFinalStates(Sokoban.map, Sokoban.worker))
+        {
+            openNodesReversed.Push(state);
+        }
+
+        while (true)
+        {
+            State state = openNodes.Pop();
+            statistic.Collect(state, openNodes, closedNodes);
+            closedNodes.Push(state);
+            foreach (State s in state.GetGeneratedStates())
+            {
+                if (!openNodes.Contains(s) && !closedNodes.Contains(s))
+                {
+                    s.prv = state;
+                    openNodes.Push(s);
+                }
+            }
+
+            state = openNodesReversed.Pop();
+            statistic.Collect(state, openNodesReversed, closedNodesReversed);
+
+            closedNodesReversed.Push(state);
+            foreach (State s in state.GenerateReversedStates())
+            {
+                var item = openNodes.GetItem(s);
+                if (item != null)
+                {
+                    state.prv = item;
+                    
+                    State? curr = state;
+                    bool flag;
+                    do
+                    {
+                        flag = false;
+                        foreach (var st in closedNodesReversed)
+                        {
+                            if (st.prv == curr)
+                            {
+                                curr = st;
+                                flag = true;
+                            }
+                        }
+                    } while (flag);
+
+                    statistic.Print(Searcher.Type.Breadth);
+                    return curr.Unwrap();
+                }
+
+                if (!openNodesReversed.Contains(s) && !closedNodesReversed.Contains(s))
+                {
+                    state.prv = s;
+                    openNodesReversed.Push(s);
+                }
+            }
+        }
+    }
 
     private List<State> GenerateFinalStates(Map map, Worker worker)
     {
         var states = new List<State>();
+        foreach ((int x, int y) in map.FindBlocks(Sokoban.Block.Box))
+        {
+            map.SetCell(x, y, (int)Sokoban.Block.Floor);
+        }
+        foreach ((int x, int y) in map.FindBlocks(Sokoban.Block.Mark))
+        {
+            map.SetCell(x, y, (int)Sokoban.Block.BoxOnMark);
+        }
+
         foreach ((int x, int y) in map.FindBlocks(Sokoban.Block.BoxOnMark))
         {
             foreach (Worker.Direction direction in Worker.directions)
@@ -71,5 +141,4 @@ class BidirectionalSearch
         }
         return states;
     }
-
 }
