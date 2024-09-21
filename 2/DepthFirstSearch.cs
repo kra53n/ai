@@ -10,10 +10,11 @@ class DepthFirstSearch
         Stack<DepthFirstSearchState> openNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> closedNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> nxtOpenNodes = new Stack<DepthFirstSearchState>();
-        openNodes.Push(new DepthFirstSearchState(Sokoban.map, Sokoban.worker, 0));
+        nxtOpenNodes.Push(new DepthFirstSearchState(Sokoban.map, Sokoban.worker, 0));
 
-        for (int lvl = 1; ; lvl++)
+        for (int lvl = 0; ; lvl++)
         {
+            openNodes = nxtOpenNodes;
             nxtOpenNodes = new Stack<DepthFirstSearchState>();
             while (openNodes.Count > 0)
             {
@@ -39,7 +40,6 @@ class DepthFirstSearch
                     }
                 }
             }
-            openNodes = nxtOpenNodes;
         }
     }
 }
