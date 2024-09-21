@@ -9,7 +9,7 @@ class Sokoban
     public const string TEXTURE = "../../../assets.png";
     public const int WIDTH = 800;
     public const int HEIGHT = 800;
-    public const int SCALE = 2;
+    public const int SCALE = 1;
     public const int BLOCK_SIZE = 32 * SCALE;
     public const double ANIMATION_DELAY = 0.5;
 
@@ -41,6 +41,8 @@ class Sokoban
     public static void Main()
     {
         Init();
+
+        Raylib.SetTargetFPS(60);
 
         while (!Raylib.WindowShouldClose())
         {
@@ -318,7 +320,7 @@ class Map : ICloneable
     {
         if (
             worker.x == 0 || worker.y == 0 ||
-            worker.x == map.GetLength(0)-1 || worker.y == map.GetLength(1)-1 ||
+            worker.x == map.GetLength(1)-1 || worker.y == map.GetLength(0)-1 ||
             GetCell(worker.y, worker.x) == (int)Sokoban.Block.Wall
         )
         {

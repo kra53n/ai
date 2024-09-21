@@ -35,39 +35,33 @@ class Editor
     {
         Vector2 mouse = GetMousePosition();
 
+        if (Raylib.IsFileDropped())
+        {
+            var files = Raylib.GetDroppedFiles();
+            if (files.Length == 1)
+            {
+                LoadLevel(Sokoban.LoadMapContentFromFile(files[0]));
+            }
+            else
+            {
+                Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
+            }
+        }
         if (Raylib.IsMouseButtonDown(MouseButton.Right))
         {
-            currBlock = null;
-            foreach (EditorBlock block in blocks)
-            {
-                if (block.x == mouse.X && block.y == mouse.Y)
-                {
-                    currBlock = block.type;
-                    break;
-                }
-            }
+            currBlock = GetBlock(mouse);
         }
         if (Raylib.IsMouseButtonDown(MouseButton.Left) && mouse.Y != 0)
         {
-            foreach (EditorBlock block in blocks)
-            {
-                if (block.x == mouse.X && block.y == mouse.Y)
-                {
-                    block.type = currBlock;
-                    goto DoNotInsertBlock;
-                }
-            }
-            if (currBlock != null)
-            {
-                blocks.Add(new EditorBlock((int)mouse.X, (int)mouse.Y, (Sokoban.Block)currBlock));
-            }
-        DoNotInsertBlock:;
+            InsertBlock(mouse);
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.G))
+        {
+            Sokoban.mode = Sokoban.Mode.Game;
         }
         if (Raylib.IsKeyPressed(KeyboardKey.S))
         {
-            int[,] level = GetLevel();
-            string dir = Directory.GetCurrentDirectory();
-            File.WriteAllLines(dir + "/level.txt", int2DArrayToStringArray(level));
+            File.WriteAllLines(Directory.GetCurrentDirectory() + "/level.txt", int2DArrayToStringArray(GetLevel()));
         }
 
         Raylib.SetWindowTitle($"Редактор Sokoban, блок({currBlock})");
@@ -75,8 +69,8 @@ class Editor
 
     public static void Draw()
     {
-        Vector2 mouse = Raylib.GetMousePosition();
-		DrawBlocks();
+        Vector2 mouse = GetMousePosition();
+        DrawBlocks();
 
         Color color = Color.White;
         color.A = 0x18;
@@ -85,7 +79,7 @@ class Editor
             color = Color.Black;
             color.A = 0xff - 0x80;
         }
-        Raylib.DrawRectangle(CalculateNearest((int)mouse.X, Sokoban.BLOCK_SIZE), CalculateNearest((int)mouse.Y, Sokoban.BLOCK_SIZE), Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE, color);
+        Raylib.DrawRectangle((int)mouse.X, (int)mouse.Y, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE, color);
     }
 
     public static int[,] GetLevel()
@@ -124,6 +118,7 @@ class Editor
         }
         return level;
     }
+    
     private static string[] int2DArrayToStringArray(int[,] intArr)
     {
         string[] res = new string[intArr.GetLength(0)];
@@ -139,33 +134,53 @@ class Editor
         return res;
     }
 
+    private static void LoadLevel(int[,] map)
+    {
+        for (int i = 0; i < blocks.Count; i++)
+        {
+            if (blocks[i].y == 0)
+            {
+                continue;
+            }
+            blocks.Remove(blocks[i]);
+            i--;
+        }
+        for (int i = 0; i < map.GetLength(0); i++)
+        {
+            for (int j = 0; j < map.GetLength(1); j++)
+            {
+                blocks.Add(new EditorBlock(j * Sokoban.BLOCK_SIZE, i * Sokoban.BLOCK_SIZE + Sokoban.BLOCK_SIZE, (Sokoban.Block)map[i, j]));
+            }
+        }
+    }
+
     private static void DrawBlocks()
-	{
-		foreach (EditorBlock block in blocks)
-		{
-			switch (block.type)
-			{
-			case Sokoban.Block.Floor:
-				Floor.Draw(block.x, block.y);
-				break;
-			case Sokoban.Block.Wall:
-				Wall.Draw(block.x, block.y);
-				break;
-			case Sokoban.Block.Box:
-				Box.Draw(block.x, block.y);
-				break;
-			case Sokoban.Block.Mark:
-				Mark.Draw(block.x, block.y);
-				break;
-			case Sokoban.Block.BoxOnMark:
-				BoxOnMark.Draw(block.x, block.y);
-				break;
-			case Sokoban.Block.Worker:
-				Worker.DrawStatic(block.x, block.y);
-				break;
-			}
-		}
-	}
+    {
+        foreach (EditorBlock block in blocks)
+        {
+            switch (block.type)
+            {
+            case Sokoban.Block.Floor:
+                Floor.Draw(block.x, block.y);
+                break;
+            case Sokoban.Block.Wall:
+                Wall.Draw(block.x, block.y);
+                break;
+            case Sokoban.Block.Box:
+                Box.Draw(block.x, block.y);
+                break;
+            case Sokoban.Block.Mark:
+                Mark.Draw(block.x, block.y);
+                break;
+            case Sokoban.Block.BoxOnMark:
+                BoxOnMark.Draw(block.x, block.y);
+                break;
+            case Sokoban.Block.Worker:
+                Worker.DrawStatic(block.x, block.y);
+                break;
+            }
+        }
+    }
 
    private static bool MouseOnBlock(Vector2 mouse)
     {
@@ -190,5 +205,33 @@ class Editor
         mouse.X = CalculateNearest((int)mouse.X, Sokoban.BLOCK_SIZE);
         mouse.Y = CalculateNearest((int)mouse.Y, Sokoban.BLOCK_SIZE);
         return mouse;
+    }
+
+    private static Sokoban.Block? GetBlock(Vector2 p)
+    {
+        foreach (EditorBlock block in blocks)
+        {
+            if (block.x == p.X && block.y == p.Y)
+            {
+                return block.type;
+            }
+        }
+        return null;
+    }
+
+    private static void InsertBlock(Vector2 p)
+    {
+        foreach (EditorBlock block in blocks)
+        {
+            if (block.x == p.X && block.y == p.Y)
+            {
+                block.type = currBlock;
+                return;
+            }
+        }
+        if (currBlock != null)
+        {
+            blocks.Add(new EditorBlock((int)p.X, (int)p.Y, (Sokoban.Block)currBlock));
+        }
     }
 }
