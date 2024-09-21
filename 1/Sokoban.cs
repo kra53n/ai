@@ -1,7 +1,6 @@
 ﻿using Raylib_cs;
 using System.Data;
 using System.Diagnostics;
-using System.Net.Http.Headers;
 using static Worker;
 
 class Sokoban
@@ -16,7 +15,7 @@ class Sokoban
 
     public static Mode mode = Mode.Game;
     public static Texture2D texture;
-    public static Map map;
+    public static Map? map;
     public static Worker worker = new Worker(0, 0);
     public static State? baseState = null;
     public static List<State>? states = null;
@@ -119,8 +118,6 @@ class Sokoban
         {
             Raylib.SetWindowTitle("Осуществляется поиск в ширину");
             currStateIdx = 0;
-            map = baseState.map;
-            worker = baseState.worker;
             states = new Searcher(Searcher.Type.Breadth).Search();
             Raylib.SetWindowTitle("Поиск в ширину завершён");
         }
@@ -128,8 +125,6 @@ class Sokoban
         {
             Raylib.SetWindowTitle("Осуществляется поиск в глубину");
             currStateIdx = 0;
-            map = baseState.map;
-            worker = baseState.worker;
             states = new Searcher(Searcher.Type.Depth).Search();
             Raylib.SetWindowTitle("Поиск в глубину завершён");
         }
@@ -137,8 +132,6 @@ class Sokoban
         {
             Raylib.SetWindowTitle("Осуществляется поиск с итеративным углублением");
             currStateIdx = 0;
-            map = baseState.map;
-            worker = baseState.worker;
             states = new DepthFirstSearch().Search();
             Raylib.SetWindowTitle("Поиск в глубину с итеративным углеблением завершён");
         }
@@ -146,20 +139,26 @@ class Sokoban
         {
             Raylib.SetWindowTitle("Осуществляется двунаправленный поиск");
             currStateIdx = 0;
-            map = baseState.map;
-            worker = baseState.worker;
             states = new BidirectionalSearch().Search();
-            Raylib.SetWindowTitle("Поиск в глубину с итеративным углеблением завершён");
+            Raylib.SetWindowTitle("Двунаправленный поиск завершён");
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
         {
             Animator.PlayOrPause();
             Raylib.SetWindowTitle("Воспроизведение пути");
         }
-
         if (map.Complete())
         {
             Raylib.SetWindowTitle("Игра пройдена");
+        }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.R))
+        {
+            Animator.Pause();
+            SwitchToFirstState();
+            map = (Map)baseState.map.Clone();
+            worker = (Worker)baseState.worker.Clone();
+            return;
         }
 
         Animator.Animate();
@@ -470,7 +469,6 @@ class Floor
 
     public static void Draw(int x, int y)
     {
-        //Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
         Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 }
@@ -660,25 +658,25 @@ class Animator
     {
         if (animating)
         {
-            animating = false;
+            Pause();
         }
         else
         {
-            animating = true;
-            lastFrameTime = Raylib.GetTime();
-            if (Sokoban.LastState())
-            {
-                Sokoban.SwitchToFirstState();
-            }
+            Play();
         }
     }
 
     public static void Play()
     {
         animating = true;
+        lastFrameTime = Raylib.GetTime();
+        if (Sokoban.LastState())
+        {
+            Sokoban.SwitchToFirstState();
+        }
     }
 
-    public static void Stop()
+    public static void Pause()
     {
         animating = false;
     }
