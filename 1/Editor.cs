@@ -58,6 +58,7 @@ class Editor
         if (Raylib.IsKeyPressed(KeyboardKey.G))
         {
             Sokoban.mode = Sokoban.Mode.Game;
+            Sokoban.SCALE = Sokoban.PREV_SCALE;
         }
         if (Raylib.IsKeyPressed(KeyboardKey.S))
         {
