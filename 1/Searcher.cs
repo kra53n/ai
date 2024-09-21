@@ -7,6 +7,7 @@ class Searcher
     {
         Breadth,
         Depth,
+        Bidirectional
     };
 
     private ISequence<State> openNodes;
@@ -37,7 +38,7 @@ class Searcher
 
         openNodes.Clear();
         closeNodes.Clear();
-        openNodes.Push(new State(Sokoban.map, Sokoban.worker));
+        openNodes.Push(new State(Sokoban.baseState.map, Sokoban.baseState.worker));
 
         while (!openNodes.Empty())
         {
@@ -161,6 +162,9 @@ class Statistic
                 break;
             case Searcher.Type.Depth:
                 s += "глубину";
+                break;
+            case Searcher.Type.Bidirectional:
+                s = "Результаты двунаправленного поиска";
                 break;
         }
         s += "\n\n";
