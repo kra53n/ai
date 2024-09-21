@@ -86,12 +86,34 @@ class Editor
     {
         int maxX = 0;
         int maxY = 0;
+        int minX = int.MaxValue;
+        int minY = int.MaxValue;
         foreach (EditorBlock block in blocks)
         {
-            maxX = Math.Max(maxX, block.x);
-            maxY = Math.Max(maxY, block.y);
+            if (block.type != Sokoban.Block.Empty)
+            {
+                maxX = Math.Max(maxX, block.x);
+                maxY = Math.Max(maxY, block.y);
+                if (block.y != 0)
+                {
+                    minX = Math.Min(minX, block.x);
+                    minY = Math.Min(minY, block.y);
+                }
+            }
+            
         }
-        int[,] level = new int[maxY / Sokoban.BLOCK_SIZE, maxX / Sokoban.BLOCK_SIZE + 1];
+        for (int i = blocks.Count - 1; i >= 0; i--)
+        {
+            var block = blocks[i];
+            if (block.type == Sokoban.Block.Empty && (block.x < minX || block.x > maxX || block.y < minY || block.y > maxY))
+            {
+                blocks.RemoveAt(i);
+            }
+        }
+
+        maxX -= minX;
+        maxY -= minY;
+        int[,] level = new int[maxY / Sokoban.BLOCK_SIZE + 3, maxX / Sokoban.BLOCK_SIZE + 3];
         for (int i = 0; i < level.GetLength(0); i++)
         {
             for (int j = 0; j < level.GetLength(1); j++)
@@ -114,7 +136,7 @@ class Editor
             {
                 continue;
             }
-            level[block.y / Sokoban.BLOCK_SIZE - 1, block.x / Sokoban.BLOCK_SIZE] = v;
+            level[(block.y - minY) / Sokoban.BLOCK_SIZE + 1, (block.x - minX) / Sokoban.BLOCK_SIZE + 1] = v;
         }
         return level;
     }
