@@ -66,7 +66,7 @@ partial class State
 {
     public Map map;
     public Worker worker;
-    public State prv;
+    public State? prv;
 
     public State(Map _map, Worker _worker)
     {
@@ -91,7 +91,7 @@ partial class State
                 }
             }
         }
-        if (worker.x != state.worker.x ||  worker.y != state.worker.y)
+        if (worker.x != state.worker.x || worker.y != state.worker.y)
         { 
             return false; 
         }
@@ -122,7 +122,7 @@ partial class State
     public List<State> Unwrap()
     {
         List<State> states = new List<State>();
-        State s = this;
+        State? s = this;
         while (s != null)
         {
             states.Insert(0, s);
@@ -231,7 +231,16 @@ class StackAdapter<T> : ISequence<T>
 
 class QueueAdapter<T> : ISequence<T>, IEnumerable<T>
 {
-    private Queue<T> queue = new Queue<T>();
+    private Queue<T> queue;
+    public QueueAdapter()
+    {
+        queue = new();
+    }
+
+    public QueueAdapter(IEnumerable<T> collection)
+    {
+        queue = new(collection);
+    }
 
     public void Push(T item)
     {
