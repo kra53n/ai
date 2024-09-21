@@ -9,8 +9,8 @@ class Sokoban
     public const string TEXTURE = "../../../assets.png";
     public const int WIDTH = 800;
     public const int HEIGHT = 800;
-    public const int SCALE = 1;
-    public const int BLOCK_SIZE = 32 * SCALE;
+    public static float SCALE = 1;
+    public static int BLOCK_SIZE = (int)(32 * SCALE);
     public const double ANIMATION_DELAY = 0.5;
 
     public static Mode mode = Mode.Game;
@@ -67,6 +67,11 @@ class Sokoban
         Raylib.CloseWindow();
     }
 
+    public static void Rescale()
+    {
+        SCALE = Math.Min((float)WIDTH / map.map.GetLength(1) / BLOCK_SIZE, (float)HEIGHT / map.map.GetLength(0) / BLOCK_SIZE);
+    }
+
     public static void Update()
     {
         if (Raylib.IsKeyPressed(KeyboardKey.E))
@@ -80,6 +85,7 @@ class Sokoban
             if (files.Length == 1)
             {
                 map.Load(LoadMapContentFromFile(files[0]));
+                Rescale();
             }
             else
             {
@@ -135,6 +141,12 @@ class Sokoban
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Four) && !Animator.Animating())
         {
+            Raylib.SetWindowTitle("Осуществляется двунаправленный поиск");
+            currStateIdx = 0;
+            map = baseState.map;
+            worker = baseState.worker;
+            states = new BidirectionalSearch().Search();
+            Raylib.SetWindowTitle("Поиск в глубину с итеративным углеблением завершён");
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
         {
@@ -157,7 +169,7 @@ class Sokoban
         Image assetImage = Raylib.LoadImage(TEXTURE);
         unsafe
         {
-            Raylib.ImageResizeNN(&assetImage, assetImage.Width * SCALE, assetImage.Height * SCALE);
+            Raylib.ImageResizeNN(&assetImage, (int)(assetImage.Width * SCALE), (int)(assetImage.Height * SCALE));
         }
         texture = Raylib.LoadTextureFromImage(assetImage);
         Raylib.UnloadImage(assetImage);
@@ -175,6 +187,7 @@ class Sokoban
             { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
             { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 }
         });
+        Rescale();
     }
 
     public static int[,] LoadMapContentFromFile(string file)
@@ -282,9 +295,9 @@ class Map : ICloneable
                     BoxOnMark.Draw(_x, _y);
                     break;
                 }
-                _x += Sokoban.BLOCK_SIZE;
+                _x += (int)(Sokoban.BLOCK_SIZE * Sokoban.SCALE);
             }
-            _y += Sokoban.BLOCK_SIZE;
+            _y += (int)(Sokoban.BLOCK_SIZE * Sokoban.SCALE);
             _x = x;
         }
         Sokoban.worker.Draw(x, y);
@@ -426,7 +439,7 @@ class Box
 
     public static void Draw(int x, int y)
     {
-        Raylib.DrawTextureRec(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y), Color.White);
+        Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 }
 
@@ -437,7 +450,7 @@ class BoxOnMark
 
     public static void Draw(int x, int y)
     {
-        Raylib.DrawTextureRec(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y), Color.White);
+        Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 }
 
@@ -447,7 +460,8 @@ class Floor
 
     public static void Draw(int x, int y)
     {
-        Raylib.DrawTextureRec(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y), Color.White);
+        //Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
+        Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 }
 
@@ -457,7 +471,7 @@ class Mark
 
     public static void Draw(int x, int y)
     {
-        Raylib.DrawTextureRec(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y), Color.White);
+        Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 }
 
@@ -467,7 +481,7 @@ class Wall
 
     public static void Draw(int x, int y)
     {
-        Raylib.DrawTextureRec(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y), Color.White);
+        Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 }
 
@@ -513,25 +527,29 @@ class Worker : ICloneable
 
     public void Draw(int mapX, int mapY)
     {
-        Raylib.DrawTextureRec(
+        Raylib.DrawTexturePro(
             Sokoban.texture,
             new Rectangle(
                 TEXTURE_POS * Sokoban.BLOCK_SIZE,
-                0, 
-                Sokoban.BLOCK_SIZE, 
+                0,
+                Sokoban.BLOCK_SIZE,
                 Sokoban.BLOCK_SIZE
-            ), 
-            new(
-                x * Sokoban.BLOCK_SIZE+mapX,
-                y * Sokoban.BLOCK_SIZE+mapY
             ),
+            new Rectangle(
+                (x * Sokoban.BLOCK_SIZE + mapX) * Sokoban.SCALE,
+                (y * Sokoban.BLOCK_SIZE + mapY) * Sokoban.SCALE,
+                Sokoban.BLOCK_SIZE * Sokoban.SCALE,
+                Sokoban.BLOCK_SIZE * Sokoban.SCALE
+            ),
+            new(0, 0),
+            0,
             Color.White
         );
     }
 
     public static void DrawStatic(int x, int y)
     {
-        Raylib.DrawTextureRec(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y), Color.White);
+        Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 
     public void Move(Map map, Direction direction)
