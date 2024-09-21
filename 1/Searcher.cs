@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Collections;
+using System.Runtime.InteropServices;
 
 class Searcher
 {
@@ -61,7 +62,7 @@ class Searcher
     }
 }
 
-class State
+partial class State
 {
     public Map map;
     public Worker worker;
@@ -229,7 +230,7 @@ class StackAdapter<T> : ISequence<T>
     }
 }
 
-class QueueAdapter<T> : ISequence<T>
+class QueueAdapter<T> : ISequence<T>, IEnumerable<T>
 {
     private Queue<T> queue = new Queue<T>();
 
@@ -268,5 +269,27 @@ class QueueAdapter<T> : ISequence<T>
             }
         }
         return false;
+    }
+
+    public T? GetItem(T item)
+    {
+        foreach (T i in queue)
+        {
+            if (i.Equals(item))
+            {
+                return i;
+            }
+        }
+        return default(T);
+    }
+
+    public IEnumerator<T> GetEnumerator()
+    {
+        return ((IEnumerable<T>)queue).GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return ((IEnumerable)queue).GetEnumerator();
     }
 }
