@@ -91,7 +91,7 @@ class BidirectionalSearch
                 }
                 if (item != null)
                 {
-                    statistic.Print(Searcher.Type.Breadth);
+                    statistic.Print(Searcher.Type.Bidirectional);
                     List<State> l = state.Unwrap();
                     l.Reverse();
                     var res = item.Unwrap();
@@ -114,8 +114,8 @@ class BidirectionalSearch
         statistic = new();
 
         openNodes = new();
-        openNodes.Push(new State(Sokoban.map, Sokoban.worker));
-        openNodesReversed = new(GenerateFinalStates(Sokoban.map, Sokoban.worker));
+        openNodes.Push(new State(Sokoban.baseState.map, Sokoban.baseState.worker));
+        openNodesReversed = new(GenerateFinalStates(Sokoban.baseState.map, Sokoban.baseState.worker));
         closedNodes = new();
         closedNodesReversed = new();
 
