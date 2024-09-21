@@ -19,9 +19,6 @@ class Sokoban
     public static List<State>? states = null;
     public static int currStateIdx = 0;
 
-    private static Searcher breadthSearcher = new Searcher(Searcher.Type.Breadth);
-    private static Searcher depthSearcher = new Searcher(Searcher.Type.Depth);
-
     public enum Block : int
     {
         Floor = 0,
@@ -82,7 +79,7 @@ class Sokoban
                 currStateIdx = 0;
                 map = baseState.map;
                 worker = baseState.worker;
-                states = breadthSearcher.Search();
+                states = new Searcher(Searcher.Type.Breadth).Search();
                 Raylib.SetWindowTitle("Поиск в ширину завершён");
             }
             if (Raylib.IsKeyPressed(KeyboardKey.Two) && !Animator.Animating())
@@ -91,8 +88,20 @@ class Sokoban
                 currStateIdx = 0;
                 map = baseState.map;
                 worker = baseState.worker;
-                states = depthSearcher.Search();
+                states = new Searcher(Searcher.Type.Depth).Search();
                 Raylib.SetWindowTitle("Поиск в глубину завершён");
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.Three) && !Animator.Animating())
+            {
+                Raylib.SetWindowTitle("Осуществляется поиск с итеративным углублением");
+                currStateIdx = 0;
+                map = baseState.map;
+                worker = baseState.worker;
+                states = new DepthFirstSearch().Search();
+                Raylib.SetWindowTitle("Поиск в глубину с итеративным углеблением завершён");
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.Four) && !Animator.Animating())
+            {
             }
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
