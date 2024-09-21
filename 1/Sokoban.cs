@@ -10,6 +10,7 @@ class Sokoban
     public const int WIDTH = 800;
     public const int HEIGHT = 800;
     public static float SCALE = 1;
+    public static float PREV_SCALE = 1;
     public static int BLOCK_SIZE = (int)(32 * SCALE);
     public const double ANIMATION_DELAY = 0.5;
 
@@ -77,6 +78,8 @@ class Sokoban
         if (Raylib.IsKeyPressed(KeyboardKey.E))
         {
             mode = Mode.Edit;
+            PREV_SCALE = SCALE;
+            SCALE = 1;
         }
 
         if (Raylib.IsFileDropped())
@@ -320,7 +323,14 @@ class Map : ICloneable
 
     public void SetCell(int row, int col, int val)
     {
-        map[row, col] = val;
+        if (val == (int)Sokoban.Block.Box && map[row, col] == (int)Sokoban.Block.Mark)
+        {
+            map[row, col] = (int)Sokoban.Block.BoxOnMark;
+        } 
+        else
+        {
+            map[row, col] = val;
+        }
     }
     public bool Complete()
     {
@@ -497,8 +507,8 @@ static class DirectionMethods
 
     public static int GetY(this Direction dir)
     {
-        if (dir == Direction.Down) return -1;
-        if (dir == Direction.Up) return 1;
+        if (dir == Direction.Down) return 1;
+        if (dir == Direction.Up) return -1;
         return 0;
     }
 }
@@ -661,6 +671,11 @@ class Animator
                 Sokoban.SwitchToFirstState();
             }
         }
+    }
+
+    public static void Play()
+    {
+        animating = true;
     }
 
     public static void Stop()
