@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 using System.Data;
 using System.Diagnostics;
+using static Worker;
 
 class Sokoban
 {
@@ -17,9 +18,6 @@ class Sokoban
     public static State? baseState = null;
     public static List<State>? states = null;
     public static int currStateIdx = 0;
-
-    private static Searcher breadthSearcher = new Searcher(Searcher.Type.Breadth);
-    private static Searcher depthSearcher = new Searcher(Searcher.Type.Depth);
 
     public enum Block : int
     {
@@ -81,7 +79,7 @@ class Sokoban
                 currStateIdx = 0;
                 map = baseState.map;
                 worker = baseState.worker;
-                states = breadthSearcher.Search();
+                states = new Searcher(Searcher.Type.Breadth).Search();
                 Raylib.SetWindowTitle("Поиск в ширину завершён");
             }
             if (Raylib.IsKeyPressed(KeyboardKey.Two) && !Animator.Animating())
@@ -90,8 +88,20 @@ class Sokoban
                 currStateIdx = 0;
                 map = baseState.map;
                 worker = baseState.worker;
-                states = depthSearcher.Search();
+                states = new Searcher(Searcher.Type.Depth).Search();
                 Raylib.SetWindowTitle("Поиск в глубину завершён");
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.Three) && !Animator.Animating())
+            {
+                Raylib.SetWindowTitle("Осуществляется поиск с итеративным углублением");
+                currStateIdx = 0;
+                map = baseState.map;
+                worker = baseState.worker;
+                states = new DepthFirstSearch().Search();
+                Raylib.SetWindowTitle("Поиск в глубину с итеративным углеблением завершён");
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.Four) && !Animator.Animating())
+            {
             }
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
@@ -419,6 +429,24 @@ class Wall
     }
 }
 
+
+static class DirectionMethods
+{
+    public static int GetX(this Direction dir)
+    {
+        if (dir == Direction.Left) return -1;
+        if (dir == Direction.Right) return 1;
+        return 0;
+    }    
+
+    public static int GetY(this Direction dir)
+    {
+        if (dir == Direction.Down) return -1;
+        if (dir == Direction.Up) return 1;
+        return 0;
+    }
+}
+
 class Worker : ICloneable
 {
     static int TEXTURE_POS = 5;
@@ -432,7 +460,7 @@ class Worker : ICloneable
         Down,
         Right,
     }
-
+   
     public static readonly Direction[] directions = { Direction.Up, Direction.Left, Direction.Down, Direction.Right };
 
     public Worker(int _x, int _y)

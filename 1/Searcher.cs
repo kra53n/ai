@@ -75,7 +75,7 @@ class State
 
     public override bool Equals(object? obj)
     {
-        if (obj == null || obj.GetType() != typeof(State))
+        if (obj == null)
         {
             return false;
         }
@@ -139,7 +139,6 @@ class Statistic
     private int currCloseNodesNum = 0;
     private int maxCloseNodesNum = 0;
     private int maxNodesNum = 0;
-    
 
     public void Collect(State currState, ISequence<State> openNodes, ISequence<State> closeNodes)
     {
