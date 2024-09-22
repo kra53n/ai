@@ -1,6 +1,8 @@
 ﻿using Raylib_cs;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 using static Worker;
 
 class Sokoban
@@ -22,6 +24,7 @@ class Sokoban
     public static int currStateIdx = 0;
 
     private static Action ControlsProcessor = GameControlsProcessor;
+    private static string searchMethod = "";
 
     public enum Block : int
     {
@@ -89,10 +92,18 @@ class Sokoban
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
         {
             Animator.PlayOrPause();
-            Raylib.SetWindowTitle("Воспроизведение пути");
         }
 
         Animator.Animate();
+    }
+
+    public static void ProcessSearch(string searchMethod, ISearcher<List<State>> searcher)
+    {
+        Sokoban.searchMethod = searchMethod;
+        Raylib.SetWindowTitle($"Осуществляется {searchMethod}");
+        currStateIdx = 0;
+        states = searcher.Search();
+        Raylib.SetWindowTitle($"{char.ToUpper(searchMethod[0]) + searchMethod.Substring(1)} завершён");
     }
 
     public static void GameControlsProcessor()
@@ -116,31 +127,24 @@ class Sokoban
 
         if (Raylib.IsKeyPressed(KeyboardKey.One))
         {
-            Raylib.SetWindowTitle("Осуществляется поиск в ширину");
-            currStateIdx = 0;
-            states = new Searcher(Searcher.Type.Breadth).Search();
-            Raylib.SetWindowTitle("Поиск в ширину завершён");
+            ProcessSearch("поиск в ширину", new Searcher(Searcher.Type.Breadth));
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Two))
         {
-            Raylib.SetWindowTitle("Осуществляется поиск в глубину");
-            currStateIdx = 0;
-            states = new Searcher(Searcher.Type.Depth).Search();
-            Raylib.SetWindowTitle("Поиск в глубину завершён");
+            ProcessSearch("поиск в глубину", new Searcher(Searcher.Type.Depth));
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Three))
         {
-            Raylib.SetWindowTitle("Осуществляется поиск с итеративным углублением");
-            currStateIdx = 0;
-            states = new DepthFirstSearch().Search();
-            Raylib.SetWindowTitle("Поиск в глубину с итеративным углеблением завершён");
+            ProcessSearch("поиск в глубину с итеративным углеблением", new DepthFirstSearch());
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Four))
         {
-            Raylib.SetWindowTitle("Осуществляется двунаправленный поиск");
-            currStateIdx = 0;
-            states = new BidirectionalSearch().Search();
-            Raylib.SetWindowTitle("Двунаправленный поиск завершён");
+            ProcessSearch("двунаправленный поиск", new BidirectionalSearch());
+        }
+
+        if (map.Complete())
+        {
+            Raylib.SetWindowTitle("Игра пройдена");
         }
     }
 
@@ -154,12 +158,16 @@ class Sokoban
                 {
                     ControlsProcessor = ReplayControlsProcessor;
                     mode = Mode.Replay;
-                    SwitchToFirstState();
+                    ShowCurrentState();
+                    Raylib.SetWindowTitle("Replay mode - " + searchMethod);
                 }
                 else
                 {
                     ControlsProcessor = GameControlsProcessor;
+                    map = (Map)map.Clone();
+                    worker = (Worker)worker.Clone();
                     mode = Mode.Game;
+                    Raylib.SetWindowTitle("Game mode");
                 }
             }
             return;
@@ -202,11 +210,6 @@ class Sokoban
 
         ControlsProcessor();
         GlobalControlsProcessor();
-
-        if (map.Complete())
-        {
-            Raylib.SetWindowTitle("Игра пройдена");
-        }
     }
 
     public static void Init()
@@ -254,6 +257,12 @@ class Sokoban
     {
         currStateIdx = -1;
         NextState();
+    }
+
+    public static void ShowCurrentState()
+    {
+        map = states[currStateIdx].map;
+        worker = states[currStateIdx].worker;
     }
 
     public static void NextState()
