@@ -12,6 +12,7 @@ class Sokoban
     public const int HEIGHT = 800;
     public static float SCALE = 1;
     public static int BLOCK_SIZE = (int)(32 * SCALE);
+    
     public const double ANIMATION_DELAY_BASE = 0.5;
     public static double ANIMATION_DELAY = 0.5;
     public static double playbackSpeed = 1;
@@ -90,13 +91,41 @@ class Sokoban
         {
             if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
             {
-                playbackSpeed = Math.Max(playbackSpeed - 0.25, 0.5);
+                double increment = 0.25;
+                if (playbackSpeed <= 2)
+                {
+                    increment = 0.25;
+                }
+                else if (playbackSpeed <= 6)
+                {
+                    increment = 1;
+                }
+                else
+                {
+                    increment = 2;
+                }
+                playbackSpeed = Math.Max(playbackSpeed - increment, 0.25);
                 ANIMATION_DELAY = ANIMATION_DELAY_BASE / playbackSpeed;
+                Raylib.SetWindowTitle($"Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
             }
             if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
             {
-                playbackSpeed = Math.Min(playbackSpeed + 0.25, 2);
+                double increment = 0.25;
+                if (playbackSpeed < 2)
+                {
+                    increment = 0.25;
+                }
+                else if (playbackSpeed < 6)
+                {
+                    increment = 1;
+                }
+                else
+                {
+                    increment = 2;
+                }
+                playbackSpeed = playbackSpeed + increment;
                 ANIMATION_DELAY = ANIMATION_DELAY_BASE / playbackSpeed;
+                Raylib.SetWindowTitle($"Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
             }
         } 
         else
@@ -181,7 +210,7 @@ class Sokoban
             }
             ControlsProcessor = ReplayControlsProcessor;
             mode = Mode.Replay;
-            Raylib.SetWindowTitle("Replay mode - " + searchMethod);
+            Raylib.SetWindowTitle($"Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
         }
         else
         {
@@ -189,7 +218,7 @@ class Sokoban
             map = (Map)map.Clone();
             worker = (Worker)worker.Clone();
             mode = Mode.Game;
-            Raylib.SetWindowTitle("Game mode");
+            Raylib.SetWindowTitle("Режим игры");
         }
     }
 
