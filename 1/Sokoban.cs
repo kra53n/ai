@@ -158,7 +158,7 @@ class Sokoban
                     ControlsProcessor = ReplayControlsProcessor;
                     mode = Mode.Replay;
                     ShowCurrentState();
-                    Raylib.SetWindowTitle("Replay mode - " + searchMethod);
+                    Raylib.SetWindowTitle("Режим воспроизведения - " + searchMethod);
                 }
                 else
                 {
@@ -166,7 +166,7 @@ class Sokoban
                     map = (Map)map.Clone();
                     worker = (Worker)worker.Clone();
                     mode = Mode.Game;
-                    Raylib.SetWindowTitle("Game mode");
+                    Raylib.SetWindowTitle("Режим игры");
                 }
             }
             return;
