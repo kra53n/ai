@@ -1,11 +1,18 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Collections;
+using System.Runtime.InteropServices;
 
-class Searcher
+interface ISearcher<T>
+{
+    public T? Search();
+}
+
+class Searcher : ISearcher<List<State>>
 {
     public enum Type
     {
         Breadth,
         Depth,
+        Bidirectional
     };
 
     private ISequence<State> openNodes;
@@ -36,7 +43,7 @@ class Searcher
 
         openNodes.Clear();
         closeNodes.Clear();
-        openNodes.Push(new State(Sokoban.map, Sokoban.worker));
+        openNodes.Push(new State(Sokoban.baseState.map, Sokoban.baseState.worker));
 
         while (!openNodes.Empty())
         {
@@ -61,11 +68,11 @@ class Searcher
     }
 }
 
-class State
+partial class State
 {
     public Map map;
     public Worker worker;
-    public State prv;
+    public State? prv;
 
     public State(Map _map, Worker _worker)
     {
@@ -90,7 +97,7 @@ class State
                 }
             }
         }
-        if (worker.x != state.worker.x ||  worker.y != state.worker.y)
+        if (worker.x != state.worker.x || worker.y != state.worker.y)
         { 
             return false; 
         }
@@ -121,7 +128,7 @@ class State
     public List<State> Unwrap()
     {
         List<State> states = new List<State>();
-        State s = this;
+        State? s = this;
         while (s != null)
         {
             states.Insert(0, s);
@@ -160,6 +167,9 @@ class Statistic
                 break;
             case Searcher.Type.Depth:
                 s += "глубину";
+                break;
+            case Searcher.Type.Bidirectional:
+                s = "Результаты двунаправленного поиска";
                 break;
         }
         s += "\n\n";
@@ -228,9 +238,18 @@ class StackAdapter<T> : ISequence<T>
     }
 }
 
-class QueueAdapter<T> : ISequence<T>
+class QueueAdapter<T> : ISequence<T>, IEnumerable<T>
 {
-    private Queue<T> queue = new Queue<T>();
+    private Queue<T> queue;
+    public QueueAdapter()
+    {
+        queue = new();
+    }
+
+    public QueueAdapter(IEnumerable<T> collection)
+    {
+        queue = new(collection);
+    }
 
     public void Push(T item)
     {
@@ -267,5 +286,27 @@ class QueueAdapter<T> : ISequence<T>
             }
         }
         return false;
+    }
+
+    public T? GetItem(T item)
+    {
+        foreach (T i in queue)
+        {
+            if (i.Equals(item))
+            {
+                return i;
+            }
+        }
+        return default(T);
+    }
+
+    public IEnumerator<T> GetEnumerator()
+    {
+        return ((IEnumerable<T>)queue).GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return ((IEnumerable)queue).GetEnumerator();
     }
 }

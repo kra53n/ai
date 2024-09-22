@@ -1,6 +1,6 @@
 using System.Data;
 
-class DepthFirstSearch
+class DepthFirstSearch : ISearcher<List<State>>
 {
     // TODO(kra53n): delete *.Clear() in other Search's
     public List<State>? Search()
@@ -10,7 +10,8 @@ class DepthFirstSearch
         Stack<DepthFirstSearchState> openNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> closedNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> nxtOpenNodes = new Stack<DepthFirstSearchState>();
-        nxtOpenNodes.Push(new DepthFirstSearchState(Sokoban.map, Sokoban.worker, 0));
+
+        nxtOpenNodes.Push(new DepthFirstSearchState(Sokoban.baseState.map, Sokoban.baseState.worker, 0));
 
         for (int lvl = 0; ; lvl++)
         {
@@ -33,7 +34,7 @@ class DepthFirstSearch
                 closedNodes.Push(state);
                 foreach (DepthFirstSearchState s in state.GetGeneratedStates())
                 {
-                    if (!openNodes.Contains(s) && !closedNodes.Contains(s))
+                    if (!openNodes.Contains(s) && !nxtOpenNodes.Contains(s) && !closedNodes.Contains(s))
                     {
                         s.prv = state;
                         openNodes.Push(s);
@@ -62,11 +63,6 @@ class DepthFirstSearchState : State
     {
         List<State> states = base.GetGeneratedStates();
         return states.Select(s => new DepthFirstSearchState(s, lvl + 1)).ToList();
-    }
-
-    public override bool Equals(object? obj)
-    {
-        return base.Equals(obj);
     }
 }
 
