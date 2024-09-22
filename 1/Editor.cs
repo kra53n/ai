@@ -3,6 +3,7 @@ using System.Collections;
 using System.Data;
 using System.Diagnostics;
 using System.Numerics;
+using System.Text.RegularExpressions;
 
 class Editor
 {
@@ -28,8 +29,10 @@ class Editor
         new EditorBlock(Sokoban.BLOCK_SIZE * 4, 0, Sokoban.Block.BoxOnMark),
         new EditorBlock(Sokoban.BLOCK_SIZE * 5, 0, Sokoban.Block.Worker),
     };
+    private static int defaultBlocksCount = blocks.Count;
 
     private static Sokoban.Block? currBlock;
+    private static bool isSaved = false;
 
     public static void Update()
     {
@@ -50,22 +53,56 @@ class Editor
         if (Raylib.IsMouseButtonDown(MouseButton.Right))
         {
             currBlock = GetBlock(mouse);
+            Raylib.SetWindowTitle($"Редактор Sokoban, блок({currBlock})");
         }
         if (Raylib.IsMouseButtonDown(MouseButton.Left) && mouse.Y != 0)
         {
             InsertBlock(mouse);
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.G))
+        if (Raylib.IsKeyPressed(KeyboardKey.G) || Raylib.IsKeyPressed(KeyboardKey.E))
         {
             Sokoban.mode = Sokoban.Mode.Game;
-            Sokoban.SCALE = Sokoban.PREV_SCALE;
+            var level = GetLevel();
+            if (level != null)
+            {
+                Sokoban.map.Load(level);
+            }
+            Sokoban.Rescale();
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.S))
+        if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
         {
-            File.WriteAllLines(Directory.GetCurrentDirectory() + "/level.txt", int2DArrayToStringArray(GetLevel()));
-        }
-
-        Raylib.SetWindowTitle($"Редактор Sokoban, блок({currBlock})");
+            if (Raylib.IsKeyPressed(KeyboardKey.S))
+            {
+                var level = GetLevel();
+                if (level != null)
+                {
+                    int minIndex = 0;
+                    foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory(), "level*.txt"))
+                    {
+                        var r = new Regex(".*level(.*?)\\.txt").Match(file);
+                        if (r.Groups[1].Value != "")
+                        {
+                            minIndex = Math.Max(minIndex, int.Parse(r.Groups[1].Value));
+                        }
+                    }
+                    minIndex++;
+                    File.WriteAllLines(Directory.GetCurrentDirectory() + $"/level{minIndex}.txt", int2DArrayToStringArray(level));
+                    Raylib.SetWindowTitle($"Saved as ({Directory.GetCurrentDirectory() + $"/level{minIndex}.txt"})");
+                }
+            }
+        } 
+        else
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.S))
+            {
+                var level = GetLevel();
+                if (level != null)
+                {
+                    File.WriteAllLines(Directory.GetCurrentDirectory() + $"/level.txt", int2DArrayToStringArray(level));
+                    Raylib.SetWindowTitle($"Saved as ({Directory.GetCurrentDirectory() + $"/level.txt"})");
+                }
+            }
+        }       
     }
 
     public static void Draw()
@@ -83,7 +120,7 @@ class Editor
         Raylib.DrawRectangle((int)mouse.X, (int)mouse.Y, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE, color);
     }
 
-    public static int[,] GetLevel()
+    public static int[,]? GetLevel()
     {
         int maxX = 0;
         int maxY = 0;
@@ -91,17 +128,13 @@ class Editor
         int minY = int.MaxValue;
         foreach (EditorBlock block in blocks)
         {
-            if (block.type != Sokoban.Block.Empty)
+            if (block.type != Sokoban.Block.Empty && block.y != 0)
             {
                 maxX = Math.Max(maxX, block.x);
                 maxY = Math.Max(maxY, block.y);
-                if (block.y != 0)
-                {
-                    minX = Math.Min(minX, block.x);
-                    minY = Math.Min(minY, block.y);
-                }
+                minX = Math.Min(minX, block.x);
+                minY = Math.Min(minY, block.y);
             }
-            
         }
         for (int i = blocks.Count - 1; i >= 0; i--)
         {
@@ -110,6 +143,10 @@ class Editor
             {
                 blocks.RemoveAt(i);
             }
+        }
+        if (blocks.Count == defaultBlocksCount)
+        {
+            return null;
         }
 
         maxX -= minX;

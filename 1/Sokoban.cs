@@ -11,7 +11,6 @@ class Sokoban
     public const int WIDTH = 800;
     public const int HEIGHT = 800;
     public static float SCALE = 1;
-    public static float PREV_SCALE = 1;
     public static int BLOCK_SIZE = (int)(32 * SCALE);
     public const double ANIMATION_DELAY = 0.5;
 
@@ -175,7 +174,6 @@ class Sokoban
         if (Raylib.IsKeyPressed(KeyboardKey.E))
         {
             mode = Mode.Edit;
-            PREV_SCALE = SCALE;
             SCALE = 1;
         }
         if (Raylib.IsKeyPressed(KeyboardKey.R))
