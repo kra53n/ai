@@ -216,6 +216,7 @@ class Sokoban
         }
         else
         {
+            Animator.Pause();
             ControlsProcessor = GameControlsProcessor;
             map = (Map)map.Clone();
             worker = (Worker)worker.Clone();
