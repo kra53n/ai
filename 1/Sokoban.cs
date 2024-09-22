@@ -12,7 +12,10 @@ class Sokoban
     public const int HEIGHT = 800;
     public static float SCALE = 1;
     public static int BLOCK_SIZE = (int)(32 * SCALE);
-    public const double ANIMATION_DELAY = 0.5;
+    
+    public const double ANIMATION_DELAY_BASE = 0.5;
+    public static double ANIMATION_DELAY = 0.5;
+    public static double playbackSpeed = 1;
 
     public static Mode mode = Mode.Game;
     public static Texture2D texture;
@@ -80,17 +83,64 @@ class Sokoban
 
     public static void ReplayControlsProcessor()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
-        {
-            PrevState();
-        }
-        if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
-        {
-            NextState();
-        }
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
         {
             Animator.PlayOrPause();
+            Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
+        }
+        if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
+            {
+                double increment = 0.25;
+                if (playbackSpeed <= 2)
+                {
+                    increment = 0.25;
+                }
+                else if (playbackSpeed <= 6)
+                {
+                    increment = 1;
+                }
+                else
+                {
+                    increment = 2;
+                }
+                playbackSpeed = Math.Max(playbackSpeed - increment, 0.25);
+                ANIMATION_DELAY = ANIMATION_DELAY_BASE / playbackSpeed;
+                Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
+            {
+                double increment = 0.25;
+                if (playbackSpeed < 2)
+                {
+                    increment = 0.25;
+                }
+                else if (playbackSpeed < 6)
+                {
+                    increment = 1;
+                }
+                else
+                {
+                    increment = 2;
+                }
+                playbackSpeed = playbackSpeed + increment;
+                ANIMATION_DELAY = ANIMATION_DELAY_BASE / playbackSpeed;
+                Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
+            }
+        } 
+        else 
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
+            {
+                Animator.Pause();
+                PrevState();
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
+            {
+                Animator.Pause();
+                NextState();
+            }
         }
 
         Animator.Animate();
@@ -141,9 +191,38 @@ class Sokoban
             ProcessSearch("двунаправленный поиск", new BidirectionalSearch());
         }
 
+        if (Raylib.IsKeyPressed(KeyboardKey.Space))
+        {
+            ToggleReplayGameMode();
+        }
+
         if (map.Complete())
         {
             Raylib.SetWindowTitle("Игра пройдена");
+        }
+    }
+
+    public static void ToggleReplayGameMode()
+    {
+        if (mode != Mode.Replay)
+        {
+            if (!ShowCurrentState())
+            {
+                Raylib.SetWindowTitle("Не был проведён поиск, невозможно посмотреть путь");
+                return;
+            }
+            ControlsProcessor = ReplayControlsProcessor;
+            mode = Mode.Replay;
+            Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
+        }
+        else
+        {
+            Animator.Pause();
+            ControlsProcessor = GameControlsProcessor;
+            map = (Map)map.Clone();
+            worker = (Worker)worker.Clone();
+            mode = Mode.Game;
+            Raylib.SetWindowTitle("Режим игры");
         }
     }
 
@@ -153,21 +232,7 @@ class Sokoban
         {
             if (Raylib.IsKeyPressed(KeyboardKey.R))
             {
-                if (mode != Mode.Replay)
-                {
-                    ControlsProcessor = ReplayControlsProcessor;
-                    mode = Mode.Replay;
-                    ShowCurrentState();
-                    Raylib.SetWindowTitle("Режим воспроизведения - " + searchMethod);
-                }
-                else
-                {
-                    ControlsProcessor = GameControlsProcessor;
-                    map = (Map)map.Clone();
-                    worker = (Worker)worker.Clone();
-                    mode = Mode.Game;
-                    Raylib.SetWindowTitle("Режим игры");
-                }
+                ToggleReplayGameMode();
             }
             return;
         }
@@ -257,10 +322,15 @@ class Sokoban
         NextState();
     }
 
-    public static void ShowCurrentState()
+    public static bool ShowCurrentState()
     {
+        if (states == null)
+        {
+            return false;
+        }
         map = states[currStateIdx].map;
         worker = states[currStateIdx].worker;
+        return true;
     }
 
     public static void NextState()

@@ -1,7 +1,9 @@
 ﻿using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 using System.Text;
@@ -50,24 +52,38 @@ partial class State
 class BidirectionalSearch : ISearcher<List<State>>
 {
     private Statistic? statistic;
-    private QueueAdapter<State>? openNodes;
-    private QueueAdapter<State>? openNodesReversed;
-    private QueueAdapter<State>? closedNodes;
-    private QueueAdapter<State>? closedNodesReversed;
+    private OrderedSet<State>? openNodes;
+    private OrderedSet<State>? openNodesReversed;
+    private OrderedSet<State>? closedNodes;
+    private HashSet<State>? closedNodesReversed;
+
+    public BidirectionalSearch()
+    {
+        statistic = new();
+
+        openNodes = new();
+        openNodes.Add(new State(Sokoban.baseState.map, Sokoban.baseState.worker));
+        openNodesReversed = new();
+        GenerateFinalStates(Sokoban.baseState.map, Sokoban.baseState.worker).ForEach(i => openNodesReversed.Add(i));
+        closedNodes = new();
+        closedNodesReversed = new();
+    }
     private void NormalIteration()
     {
-        QueueAdapter<State> newO = new();
-        while (!openNodes.Empty())
+        OrderedSet<State> newO = new();
+        while (openNodes.Count != 0)
         {
             State state = openNodes.Pop();
-            statistic.Collect(state, openNodes, closedNodes);
-            closedNodes.Push(state);
+
+            //statistic.Collect(state, openNodes, closedNodes);
+            
+            closedNodes.Add(state);
             foreach (State s in state.GetGeneratedStates())
             {
                 if (!openNodes.Contains(s) && !newO.Contains(s) && !closedNodes.Contains(s))
                 {
                     s.prv = state;
-                    newO.Push(s);
+                    newO.Add(s);
                 }
             }
         }
@@ -76,19 +92,21 @@ class BidirectionalSearch : ISearcher<List<State>>
 
     private List<State>? ReversedIteration()
     {
-        QueueAdapter<State> newO = new();
-        while (!openNodesReversed.Empty())
+        OrderedSet<State> newO = new();
+        while (openNodesReversed.Count != 0)
         {
             State state = openNodesReversed.Pop();
-            statistic.Collect(state, openNodesReversed, closedNodesReversed);
+            
+            //statistic.Collect(state, openNodesReversed, closedNodesReversed);
 
-            closedNodesReversed.Push(state);
+            closedNodesReversed.Add(state);
             foreach (State s in state.GenerateReversedStates())
             {
+                //if (item == null) {
+                //    item = closedNodes.GetItem(s);
+                //}
                 var item = openNodes.GetItem(s);
-                if (item == null) {
-                    item = closedNodes.GetItem(s);
-                }
+                if (item == null) { item = closedNodes.GetItem(s); }
                 if (item != null)
                 {
                     statistic.Print(Searcher.Type.Bidirectional);
@@ -101,7 +119,7 @@ class BidirectionalSearch : ISearcher<List<State>>
                 if (!openNodesReversed.Contains(s) && !newO.Contains(s) && !closedNodesReversed.Contains(s))
                 {
                     s.prv = state;
-                    newO.Push(s);
+                    newO.Add(s);
                 }
             }
         }
@@ -111,23 +129,23 @@ class BidirectionalSearch : ISearcher<List<State>>
 
     public List<State>? Search()
     {
-        statistic = new();
-
-        openNodes = new();
-        openNodes.Push(new State(Sokoban.baseState.map, Sokoban.baseState.worker));
-        openNodesReversed = new(GenerateFinalStates(Sokoban.baseState.map, Sokoban.baseState.worker));
-        closedNodes = new();
-        closedNodesReversed = new();
-
         while (true)
         {
             NormalIteration();
             var result = ReversedIteration();
+
+            Console.Clear();
+            Console.WriteLine($"On.count = {openNodes.Count()}");
+            Console.WriteLine($"Or.count = {openNodesReversed.Count()}");
+            Console.WriteLine($"Cn.count = {closedNodes.Count()}");
+            Console.WriteLine($"Cr.count = {closedNodesReversed.Count()}");
+
+
             if (result != null)
             {
                 return result;
             }
-        };
+        }
         
     }
 

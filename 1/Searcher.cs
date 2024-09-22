@@ -80,6 +80,26 @@ partial class State
         worker = _worker;
     }
 
+    public override int GetHashCode()
+    {
+        string str = "";
+        for (int row = 0; row < map.GetRowsNum(); row++)
+        {
+            for (int col = 0; col < map.GetColsNum(); col++)
+            {
+                if (row == worker.y && col == worker.x)
+                {
+                    str += (int)Sokoban.Block.Worker;
+                }
+                else
+                {
+                    str += map.GetCell(row, col);
+                }
+            }
+        }
+        return str.GetHashCode();
+    }
+
     public override bool Equals(object? obj)
     {
         if (obj == null)
@@ -103,6 +123,8 @@ partial class State
         }
         return true;
     }
+
+    
 
     public bool IsGoal()
     {
