@@ -34,6 +34,9 @@ class Editor
     private static Sokoban.Block? currBlock;
     private static bool isSaved = false;
 
+    private static Func<bool> IsLeftMouseButtonDown = () => Raylib.IsMouseButtonDown(MouseButton.Left) || Raylib.IsKeyDown(KeyboardKey.One);
+    private static Func<bool> IsRightMouseButtonDown = () => Raylib.IsMouseButtonDown(MouseButton.Right) || Raylib.IsKeyDown(KeyboardKey.Two);
+
     public static void Update()
     {
         Vector2 mouse = GetMousePosition();
@@ -50,11 +53,11 @@ class Editor
                 Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
             }
         }
-        if (Raylib.IsMouseButtonDown(MouseButton.Left) && mouse.Y != 0)
+        if (IsLeftMouseButtonDown() && mouse.Y != 0)
         {
             InsertBlock(mouse);
         }
-        else if (Raylib.IsMouseButtonDown(MouseButton.Right) || Raylib.IsMouseButtonDown(MouseButton.Left))
+        else if (IsRightMouseButtonDown() || IsLeftMouseButtonDown())
         {
             currBlock = GetBlock(mouse);
             Raylib.SetWindowTitle($"Редактор Sokoban, блок({currBlock})");
