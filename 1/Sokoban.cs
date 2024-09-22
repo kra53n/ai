@@ -128,14 +128,16 @@ class Sokoban
                 Raylib.SetWindowTitle($"Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
             }
         } 
-        else
+        else 
         {
             if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
             {
+                Animator.Pause();
                 PrevState();
             }
             if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
             {
+                Animator.Pause();
                 NextState();
             }
         }
