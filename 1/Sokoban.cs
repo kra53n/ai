@@ -12,7 +12,9 @@ class Sokoban
     public const int HEIGHT = 800;
     public static float SCALE = 1;
     public static int BLOCK_SIZE = (int)(32 * SCALE);
-    public const double ANIMATION_DELAY = 0.5;
+    public const double ANIMATION_DELAY_BASE = 0.5;
+    public static double ANIMATION_DELAY = 0.5;
+    public static double playbackSpeed = 1;
 
     public static Mode mode = Mode.Game;
     public static Texture2D texture;
@@ -80,17 +82,33 @@ class Sokoban
 
     public static void ReplayControlsProcessor()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
-        {
-            PrevState();
-        }
-        if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
-        {
-            NextState();
-        }
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
         {
             Animator.PlayOrPause();
+        }
+        if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
+            {
+                playbackSpeed = Math.Max(playbackSpeed - 0.25, 0.5);
+                ANIMATION_DELAY = ANIMATION_DELAY_BASE / playbackSpeed;
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
+            {
+                playbackSpeed = Math.Min(playbackSpeed + 0.25, 2);
+                ANIMATION_DELAY = ANIMATION_DELAY_BASE / playbackSpeed;
+            }
+        } 
+        else
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
+            {
+                PrevState();
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
+            {
+                NextState();
+            }
         }
 
         Animator.Animate();
@@ -141,9 +159,37 @@ class Sokoban
             ProcessSearch("двунаправленный поиск", new BidirectionalSearch());
         }
 
+        if (Raylib.IsKeyPressed(KeyboardKey.Space))
+        {
+            ToggleReplayGameMode();
+        }
+
         if (map.Complete())
         {
             Raylib.SetWindowTitle("Игра пройдена");
+        }
+    }
+
+    public static void ToggleReplayGameMode()
+    {
+        if (mode != Mode.Replay)
+        {
+            if (!ShowCurrentState())
+            {
+                Raylib.SetWindowTitle("Не был проведён поиск, невозможно посмотреть путь");
+                return;
+            }
+            ControlsProcessor = ReplayControlsProcessor;
+            mode = Mode.Replay;
+            Raylib.SetWindowTitle("Replay mode - " + searchMethod);
+        }
+        else
+        {
+            ControlsProcessor = GameControlsProcessor;
+            map = (Map)map.Clone();
+            worker = (Worker)worker.Clone();
+            mode = Mode.Game;
+            Raylib.SetWindowTitle("Game mode");
         }
     }
 
@@ -153,21 +199,7 @@ class Sokoban
         {
             if (Raylib.IsKeyPressed(KeyboardKey.R))
             {
-                if (mode != Mode.Replay)
-                {
-                    ControlsProcessor = ReplayControlsProcessor;
-                    mode = Mode.Replay;
-                    ShowCurrentState();
-                    Raylib.SetWindowTitle("Replay mode - " + searchMethod);
-                }
-                else
-                {
-                    ControlsProcessor = GameControlsProcessor;
-                    map = (Map)map.Clone();
-                    worker = (Worker)worker.Clone();
-                    mode = Mode.Game;
-                    Raylib.SetWindowTitle("Game mode");
-                }
+                ToggleReplayGameMode();
             }
             return;
         }
@@ -257,10 +289,15 @@ class Sokoban
         NextState();
     }
 
-    public static void ShowCurrentState()
+    public static bool ShowCurrentState()
     {
+        if (states == null)
+        {
+            return false;
+        }
         map = states[currStateIdx].map;
         worker = states[currStateIdx].worker;
+        return true;
     }
 
     public static void NextState()
