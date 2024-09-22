@@ -86,6 +86,7 @@ class Sokoban
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
         {
             Animator.PlayOrPause();
+            Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
         }
         if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
         {
@@ -106,7 +107,7 @@ class Sokoban
                 }
                 playbackSpeed = Math.Max(playbackSpeed - increment, 0.25);
                 ANIMATION_DELAY = ANIMATION_DELAY_BASE / playbackSpeed;
-                Raylib.SetWindowTitle($"Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
+                Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
             }
             if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
             {
@@ -125,7 +126,7 @@ class Sokoban
                 }
                 playbackSpeed = playbackSpeed + increment;
                 ANIMATION_DELAY = ANIMATION_DELAY_BASE / playbackSpeed;
-                Raylib.SetWindowTitle($"Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
+                Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
             }
         } 
         else 
@@ -212,7 +213,7 @@ class Sokoban
             }
             ControlsProcessor = ReplayControlsProcessor;
             mode = Mode.Replay;
-            Raylib.SetWindowTitle($"Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
+            Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
         }
         else
         {
