@@ -1,7 +1,12 @@
 ﻿using System.Collections;
 using System.Runtime.InteropServices;
 
-class Searcher
+interface ISearcher<T>
+{
+    public T? Search();
+}
+
+class Searcher : ISearcher<List<State>>
 {
     public enum Type
     {

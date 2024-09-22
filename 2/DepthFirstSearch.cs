@@ -1,6 +1,6 @@
 using System.Data;
 
-class DepthFirstSearch
+class DepthFirstSearch : ISearcher<List<State>>
 {
     // TODO(kra53n): delete *.Clear() in other Search's
     public List<State>? Search()

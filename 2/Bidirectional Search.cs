@@ -47,7 +47,7 @@ partial class State
 }
 
 
-class BidirectionalSearch
+class BidirectionalSearch : ISearcher<List<State>>
 {
     private Statistic? statistic;
     private QueueAdapter<State>? openNodes;
