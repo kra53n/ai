@@ -50,14 +50,14 @@ class Editor
                 Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
             }
         }
-        if (Raylib.IsMouseButtonDown(MouseButton.Right))
-        {
-            currBlock = GetBlock(mouse);
-            Raylib.SetWindowTitle($"Редактор Sokoban, блок({currBlock})");
-        }
         if (Raylib.IsMouseButtonDown(MouseButton.Left) && mouse.Y != 0)
         {
             InsertBlock(mouse);
+        }
+        else if (Raylib.IsMouseButtonDown(MouseButton.Right) || Raylib.IsMouseButtonDown(MouseButton.Left))
+        {
+            currBlock = GetBlock(mouse);
+            Raylib.SetWindowTitle($"Редактор Sokoban, блок({currBlock})");
         }
         if (Raylib.IsKeyPressed(KeyboardKey.G) || Raylib.IsKeyPressed(KeyboardKey.E))
         {
