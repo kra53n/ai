@@ -21,6 +21,8 @@ class Sokoban
     public static List<State>? states = null;
     public static int currStateIdx = 0;
 
+    private static Action ControlsProcessor = GameControlsProcessor;
+
     public enum Block : int
     {
         Floor = 0,
@@ -36,6 +38,7 @@ class Sokoban
     {
         Game,
         Edit,
+        Replay
     }
 
     public static void Main()
@@ -51,6 +54,7 @@ class Sokoban
 
             switch (mode)
             {
+                case Mode.Replay:
                 case Mode.Game:
                     map.Draw();
                     Update();
@@ -72,32 +76,27 @@ class Sokoban
         SCALE = Math.Min((float)WIDTH / map.map.GetLength(1) / BLOCK_SIZE, (float)HEIGHT / map.map.GetLength(0) / BLOCK_SIZE);
     }
 
-    public static void Update()
+    public static void ReplayControlsProcessor()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.E))
+        if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
         {
-            mode = Mode.Edit;
-            PREV_SCALE = SCALE;
-            SCALE = 1;
+            PrevState();
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
+        {
+            NextState();
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.Space))
+        {
+            Animator.PlayOrPause();
+            Raylib.SetWindowTitle("Воспроизведение пути");
         }
 
-        if (Raylib.IsFileDropped())
-        {
-            var files = Raylib.GetDroppedFiles();
-            if (files.Length == 1)
-            {
-                map.Load(LoadMapContentFromFile(files[0]));
-                Rescale();
-            }
-            else
-            {
-                Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
-            }
-        }
-        if (Raylib.IsKeyPressed(KeyboardKey.F))
-        {
-            Process.Start("explorer.exe", Directory.GetCurrentDirectory());
-        }
+        Animator.Animate();
+    }
+
+    public static void GameControlsProcessor()
+    {
         if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
         {
             worker.Up(map);
@@ -114,44 +113,63 @@ class Sokoban
         {
             worker.Right(map);
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.One) && !Animator.Animating())
+
+        if (Raylib.IsKeyPressed(KeyboardKey.One))
         {
             Raylib.SetWindowTitle("Осуществляется поиск в ширину");
             currStateIdx = 0;
             states = new Searcher(Searcher.Type.Breadth).Search();
             Raylib.SetWindowTitle("Поиск в ширину завершён");
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.Two) && !Animator.Animating())
+        if (Raylib.IsKeyPressed(KeyboardKey.Two))
         {
             Raylib.SetWindowTitle("Осуществляется поиск в глубину");
             currStateIdx = 0;
             states = new Searcher(Searcher.Type.Depth).Search();
             Raylib.SetWindowTitle("Поиск в глубину завершён");
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.Three) && !Animator.Animating())
+        if (Raylib.IsKeyPressed(KeyboardKey.Three))
         {
             Raylib.SetWindowTitle("Осуществляется поиск с итеративным углублением");
             currStateIdx = 0;
             states = new DepthFirstSearch().Search();
             Raylib.SetWindowTitle("Поиск в глубину с итеративным углеблением завершён");
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.Four) && !Animator.Animating())
+        if (Raylib.IsKeyPressed(KeyboardKey.Four))
         {
             Raylib.SetWindowTitle("Осуществляется двунаправленный поиск");
             currStateIdx = 0;
             states = new BidirectionalSearch().Search();
             Raylib.SetWindowTitle("Двунаправленный поиск завершён");
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.Space))
-        {
-            Animator.PlayOrPause();
-            Raylib.SetWindowTitle("Воспроизведение пути");
-        }
-        if (map.Complete())
-        {
-            Raylib.SetWindowTitle("Игра пройдена");
-        }
+    }
 
+    public static void GlobalControlsProcessor()
+    {
+        if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.R))
+            {
+                if (mode != Mode.Replay)
+                {
+                    ControlsProcessor = ReplayControlsProcessor;
+                    mode = Mode.Replay;
+                    SwitchToFirstState();
+                }
+                else
+                {
+                    ControlsProcessor = GameControlsProcessor;
+                    mode = Mode.Game;
+                }
+            }
+            return;
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.E))
+        {
+            mode = Mode.Edit;
+            PREV_SCALE = SCALE;
+            SCALE = 1;
+        }
         if (Raylib.IsKeyPressed(KeyboardKey.R))
         {
             Animator.Pause();
@@ -160,8 +178,35 @@ class Sokoban
             worker = (Worker)baseState.worker.Clone();
             return;
         }
+        if (Raylib.IsKeyPressed(KeyboardKey.F))
+        {
+            Process.Start("explorer.exe", Directory.GetCurrentDirectory());
+        } 
+    }
 
-        Animator.Animate();
+    public static void Update()
+    {
+        if (Raylib.IsFileDropped())
+        {
+            var files = Raylib.GetDroppedFiles();
+            if (files.Length == 1)
+            {
+                map.Load(LoadMapContentFromFile(files[0]));
+                Rescale();
+            }
+            else
+            {
+                Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
+            }
+        }
+
+        ControlsProcessor();
+        GlobalControlsProcessor();
+
+        if (map.Complete())
+        {
+            Raylib.SetWindowTitle("Игра пройдена");
+        }
     }
 
     public static void Init()
@@ -217,7 +262,18 @@ class Sokoban
         {
             return;
         }
-        currStateIdx += 1;
+        currStateIdx = Math.Min(currStateIdx + 1, states.Count - 1);
+        map = states[currStateIdx].map;
+        worker = states[currStateIdx].worker;
+    }
+
+    public static void PrevState()
+    {
+        if (states == null || states.Count == 0)
+        {
+            return;
+        }
+        currStateIdx = Math.Max(currStateIdx - 1, 0);
         map = states[currStateIdx].map;
         worker = states[currStateIdx].worker;
     }
@@ -654,6 +710,12 @@ class Animator
     private static bool animating = false;
     private static double lastFrameTime;
 
+    public static bool Animating
+    {
+        get {
+            return animating;
+        }
+    }
     public static void PlayOrPause()
     {
         if (animating)
@@ -694,10 +756,5 @@ class Animator
             Sokoban.NextState();
         }
 
-    }
-
-    public static bool Animating()
-    {
-        return animating;
     }
 }
