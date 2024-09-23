@@ -11,8 +11,7 @@ class Searcher : ISearcher<List<State>>
     public enum Type
     {
         Breadth,
-        Depth,
-        Bidirectional
+        Depth
     };
 
     private ISequence<State> openNodes;
@@ -48,7 +47,7 @@ class Searcher : ISearcher<List<State>>
         while (!openNodes.Empty())
         {
             State state = openNodes.Pop();
-            statistic.Collect(state, openNodes, closeNodes);
+            statistic.Collect(openNodes, closeNodes);
             if (state.IsGoal())
             {
                 statistic.Print(type);
@@ -170,23 +169,23 @@ partial class State
     }
 }
 
-class Statistic
+partial class Statistic
 {
-    private int iters = 0;
-    private int currOpenNodesNum = 0;
-    private int maxOpenNodesNum = 0;
-    private int currCloseNodesNum = 0;
-    private int maxCloseNodesNum = 0;
-    private int maxNodesNum = 0;
+    protected int iters = 0;
+    protected int currOpenNodesNum = 0;
+    protected int maxOpenNodesNum = 0;
+    protected int currClosedNodesNum = 0;
+    protected int maxClosedNodesNum = 0;
+    protected int maxNodesNum = 0;
 
-    public void Collect(State currState, ISequence<State> openNodes, ISequence<State> closeNodes)
+    public void Collect(ISequence<State> openNodes, ISequence<State> closeNodes)
     {
         iters++;
         currOpenNodesNum = openNodes.Count();
-        currCloseNodesNum = closeNodes.Count();
+        currClosedNodesNum = closeNodes.Count();
         maxOpenNodesNum = Math.Max(maxOpenNodesNum, currOpenNodesNum);
-        maxCloseNodesNum = Math.Max(maxCloseNodesNum, currCloseNodesNum);
-        maxNodesNum = Math.Max(maxNodesNum, currOpenNodesNum + currCloseNodesNum);
+        maxClosedNodesNum = Math.Max(maxClosedNodesNum, currClosedNodesNum);
+        maxNodesNum = Math.Max(maxNodesNum, currOpenNodesNum + currClosedNodesNum);
     }
 
     public void Print(Searcher.Type type)
@@ -200,9 +199,6 @@ class Statistic
             case Searcher.Type.Depth:
                 s += "глубину";
                 break;
-            case Searcher.Type.Bidirectional:
-                s = "Результаты двунаправленного поиска";
-                break;
         }
         s += "\n\n";
         s += $"Итераций: {iters}\n";
@@ -210,8 +206,8 @@ class Statistic
         s += $"\tКоличество при завершении: {currOpenNodesNum}\n";
         s += $"\tМаксимальное количество: {maxOpenNodesNum}\n";
         s += $"Закрыте узлы:\n";
-        s += $"\tКоличество при завершении: {currCloseNodesNum}\n";
-        s += $"\tМаксимальное количество: {maxCloseNodesNum}\n";
+        s += $"\tКоличество при завершении: {currClosedNodesNum}\n";
+        s += $"\tМаксимальное количество: {maxClosedNodesNum}\n";
         s += $"Максимальное количество хранимых в памяти узлов: {maxNodesNum}\n";
         s += "\n";
         Console.WriteLine(s);
