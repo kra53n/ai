@@ -80,7 +80,7 @@ class BidirectionalSearch : ISearcher<List<State>>
             closedNodes.Add(state);
             foreach (State s in state.GetGeneratedStates())
             {
-                if (!openNodes.Contains(s) && !newO.Contains(s) && !closedNodes.Contains(s))
+                if (!openNodes.Contains(s) && !closedNodes.Contains(s))
                 {
                     s.prv = state;
                     newO.Add(s);
@@ -116,7 +116,7 @@ class BidirectionalSearch : ISearcher<List<State>>
                     res.AddRange(l);
                     return res;
                 }
-                if (!openNodesReversed.Contains(s) && !newO.Contains(s) && !closedNodesReversed.Contains(s))
+                if (!openNodesReversed.Contains(s) && !closedNodesReversed.Contains(s))
                 {
                     s.prv = state;
                     newO.Add(s);
