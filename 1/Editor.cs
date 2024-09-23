@@ -86,7 +86,7 @@ class Editor
                         }
                     }
                     minIndex++;
-                    File.WriteAllLines(Directory.GetCurrentDirectory() + $"/level{minIndex}.txt", int2DArrayToStringArray(level));
+                    File.WriteAllLines(Directory.GetCurrentDirectory() + $"/level{minIndex}.txt", byte2DArrayToStringArray(level));
                     Raylib.SetWindowTitle($"Saved as ({Directory.GetCurrentDirectory() + $"/level{minIndex}.txt"})");
                 }
             }
@@ -98,7 +98,7 @@ class Editor
                 var level = GetLevel();
                 if (level != null)
                 {
-                    File.WriteAllLines(Directory.GetCurrentDirectory() + $"/level.txt", int2DArrayToStringArray(level));
+                    File.WriteAllLines(Directory.GetCurrentDirectory() + $"/level.txt", byte2DArrayToStringArray(level));
                     Raylib.SetWindowTitle($"Saved as ({Directory.GetCurrentDirectory() + $"/level.txt"})");
                 }
             }
@@ -120,7 +120,7 @@ class Editor
         Raylib.DrawRectangle((int)mouse.X, (int)mouse.Y, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE, color);
     }
 
-    public static int[,]? GetLevel()
+    public static byte[,]? GetLevel()
     {
         int maxX = 0;
         int maxY = 0;
@@ -151,7 +151,7 @@ class Editor
 
         maxX -= minX;
         maxY -= minY;
-        int[,] level = new int[maxY / Sokoban.BLOCK_SIZE + 3, maxX / Sokoban.BLOCK_SIZE + 3];
+        byte[,] level = new byte[maxY / Sokoban.BLOCK_SIZE + 3, maxX / Sokoban.BLOCK_SIZE + 3];
         for (int i = 0; i < level.GetLength(0); i++)
         {
             for (int j = 0; j < level.GetLength(1); j++)
@@ -174,12 +174,12 @@ class Editor
             {
                 continue;
             }
-            level[(block.y - minY) / Sokoban.BLOCK_SIZE + 1, (block.x - minX) / Sokoban.BLOCK_SIZE + 1] = v;
+            level[(block.y - minY) / Sokoban.BLOCK_SIZE + 1, (block.x - minX) / Sokoban.BLOCK_SIZE + 1] = (byte)v;
         }
         return level;
     }
     
-    private static string[] int2DArrayToStringArray(int[,] intArr)
+    private static string[] byte2DArrayToStringArray(byte[,] intArr)
     {
         string[] res = new string[intArr.GetLength(0)];
         for (int i = 0; i < intArr.GetLength(0); i++)
@@ -194,7 +194,7 @@ class Editor
         return res;
     }
 
-    private static void LoadLevel(int[,] map)
+    private static void LoadLevel(byte[,] map)
     {
         for (int i = 0; i < blocks.Count; i++)
         {
