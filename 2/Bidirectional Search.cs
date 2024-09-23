@@ -52,9 +52,9 @@ partial class State
 class BidirectionalSearch : ISearcher<List<State>>
 {
     private Statistic? statistic;
-    private OrderedSet<State>? openNodes;
-    private OrderedSet<State>? openNodesReversed;
-    private OrderedSet<State>? closedNodes;
+    private HashSet<State>? openNodes;
+    private HashSet<State>? openNodesReversed;
+    private HashSet<State>? closedNodes;
     private HashSet<State>? closedNodesReversed;
 
     public BidirectionalSearch()
@@ -68,19 +68,29 @@ class BidirectionalSearch : ISearcher<List<State>>
         closedNodes = new();
         closedNodesReversed = new();
     }
-    private void NormalIteration()
-    {
-        OrderedSet<State> newO = new();
-        while (openNodes.Count != 0)
-        {
-            State state = openNodes.Pop();
 
+    private List<State>? NormalIteration()
+    {
+        HashSet<State> newO = new();
+        foreach (var state in openNodes)
+        {
             //statistic.Collect(state, openNodes, closedNodes);
             
             closedNodes.Add(state);
             foreach (State s in state.GetGeneratedStates())
             {
-                if (!openNodes.Contains(s) && !newO.Contains(s) && !closedNodes.Contains(s))
+                openNodesReversed.TryGetValue(s, out var item);
+                //if (item == null) { item = closedNodesReversed.GetItem(s); }
+                if (item != null)
+                {
+                    statistic.Print(Searcher.Type.Bidirectional);
+                    List<State> l = item.Unwrap();
+                    l.Reverse();
+                    var res = state.Unwrap();
+                    res.AddRange(l);
+                    return res;
+                }
+                if (!openNodes.Contains(s) && !closedNodes.Contains(s))
                 {
                     s.prv = state;
                     newO.Add(s);
@@ -88,15 +98,14 @@ class BidirectionalSearch : ISearcher<List<State>>
             }
         }
         openNodes = newO;
+        return null;
     }
 
     private List<State>? ReversedIteration()
     {
-        OrderedSet<State> newO = new();
-        while (openNodesReversed.Count != 0)
-        {
-            State state = openNodesReversed.Pop();
-            
+        HashSet<State> newO = new();
+        foreach (var state in openNodesReversed)
+        {           
             //statistic.Collect(state, openNodesReversed, closedNodesReversed);
 
             closedNodesReversed.Add(state);
@@ -105,8 +114,8 @@ class BidirectionalSearch : ISearcher<List<State>>
                 //if (item == null) {
                 //    item = closedNodes.GetItem(s);
                 //}
-                var item = openNodes.GetItem(s);
-                if (item == null) { item = closedNodes.GetItem(s); }
+                openNodes.TryGetValue(s, out var item);
+                //if (item == null) { item = closedNodes.GetItem(s); }
                 if (item != null)
                 {
                     statistic.Print(Searcher.Type.Bidirectional);
@@ -116,7 +125,7 @@ class BidirectionalSearch : ISearcher<List<State>>
                     res.AddRange(l);
                     return res;
                 }
-                if (!openNodesReversed.Contains(s) && !newO.Contains(s) && !closedNodesReversed.Contains(s))
+                if (!openNodesReversed.Contains(s) && !closedNodesReversed.Contains(s))
                 {
                     s.prv = state;
                     newO.Add(s);
@@ -131,8 +140,15 @@ class BidirectionalSearch : ISearcher<List<State>>
     {
         while (true)
         {
-            NormalIteration();
-            var result = ReversedIteration();
+            List<State>? result = null;
+            if (openNodes.Count < openNodesReversed.Count)
+            {
+                result = NormalIteration();
+            }
+            else
+            {
+                result = ReversedIteration();
+            }
 
             Console.Clear();
             Console.WriteLine($"On.count = {openNodes.Count()}");

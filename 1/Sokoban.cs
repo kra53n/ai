@@ -26,9 +26,9 @@ class Sokoban
     public static int currStateIdx = 0;
 
     private static Action ControlsProcessor = GameControlsProcessor;
-    private static string searchMethod = "";
+    public static string searchMethod = "";
 
-    public enum Block : int
+    public enum Block : byte
     {
         Floor = 0,
         Wall,
@@ -86,7 +86,6 @@ class Sokoban
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
         {
             Animator.PlayOrPause();
-            Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
         }
         if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
         {
@@ -264,6 +263,10 @@ class Sokoban
             {
                 map.Load(LoadMapContentFromFile(files[0]));
                 Rescale();
+                if (mode == Mode.Replay)
+                {
+                    ToggleReplayGameMode();
+                }
             }
             else
             {
@@ -288,7 +291,7 @@ class Sokoban
         Raylib.UnloadImage(assetImage);
 
         map = new Map(0, 0);
-        map.Load(new int[,] {
+        map.Load(new byte[,] {
             { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
             { 1, 0, 3, 1, 9, 9, 9, 9, 9, 9 },
             { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
@@ -303,15 +306,15 @@ class Sokoban
         Rescale();
     }
 
-    public static int[,] LoadMapContentFromFile(string file)
+    public static byte[,] LoadMapContentFromFile(string file)
     {
         string[] lines = File.ReadAllLines(file);
-        int[,] content = new int[lines.Length, lines[0].Length];
+        byte[,] content = new byte[lines.Length, lines[0].Length];
         for (int i = 0; i < lines.Length; i++)
         {
             var cols = lines[i].ToCharArray();
             for (int j = 0; j < cols.Length; j++)
-                content[i, j] = cols[j] - '0';
+                content[i, j] = (byte)(cols[j] - '0');
         }
         return content;
     }
@@ -363,7 +366,7 @@ class Sokoban
 
 class Map : ICloneable
 {
-    public int[,]? map;
+    public byte[,]? map;
     public int x;
     public int y;
     
@@ -372,7 +375,7 @@ class Map : ICloneable
         x = _x;
         y = _y;
     }
-    public void Load(int[,] _map)
+    public void Load(byte[,] _map)
     {
         map = _map;
         for (int row = 0; row < GetRowsNum(); row++)
@@ -453,7 +456,7 @@ class Map : ICloneable
         return map[row, col];
     }
 
-    public void SetCell(int row, int col, int val)
+    public void SetCell(int row, int col, byte val)
     {
         if (val == (int)Sokoban.Block.Box && map[row, col] == (int)Sokoban.Block.Mark)
         {
@@ -569,7 +572,7 @@ class Map : ICloneable
             throw new NoNullAllowedException("map is null");
         }
         Map m = new Map(x, y);
-        m.map = (int[,])map.Clone();
+        m.map = (byte[,])map.Clone();
         return m;
     }
 }
@@ -808,6 +811,7 @@ class Animator
     public static void Play()
     {
         animating = true;
+        Raylib.SetWindowTitle($"⏵ Режим воспроизведения (x{Sokoban.playbackSpeed}) - " + Sokoban.searchMethod);
         lastFrameTime = Raylib.GetTime();
         if (Sokoban.LastState())
         {
@@ -818,6 +822,7 @@ class Animator
     public static void Pause()
     {
         animating = false;
+        Raylib.SetWindowTitle($"⏸ Режим воспроизведения (x{Sokoban.playbackSpeed}) - " + Sokoban.searchMethod);
     }
 
     public static void Animate()
