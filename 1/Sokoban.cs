@@ -26,7 +26,7 @@ class Sokoban
     public static int currStateIdx = 0;
 
     private static Action ControlsProcessor = GameControlsProcessor;
-    private static string searchMethod = "";
+    public static string searchMethod = "";
 
     public enum Block : int
     {
@@ -86,7 +86,6 @@ class Sokoban
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
         {
             Animator.PlayOrPause();
-            Raylib.SetWindowTitle($"{(Animator.Animating ? "⏵" : "⏸")} Режим воспроизведения (x{playbackSpeed}) - " + searchMethod);
         }
         if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
         {
@@ -808,6 +807,7 @@ class Animator
     public static void Play()
     {
         animating = true;
+        Raylib.SetWindowTitle($"⏵ Режим воспроизведения (x{Sokoban.playbackSpeed}) - " + Sokoban.searchMethod);
         lastFrameTime = Raylib.GetTime();
         if (Sokoban.LastState())
         {
@@ -818,6 +818,7 @@ class Animator
     public static void Pause()
     {
         animating = false;
+        Raylib.SetWindowTitle($"⏸ Режим воспроизведения (x{Sokoban.playbackSpeed}) - " + Sokoban.searchMethod);
     }
 
     public static void Animate()
