@@ -73,15 +73,20 @@ partial class State
     public Map map;
     public Worker worker;
     public State? prv;
+    public int hash;
 
     public State(Map _map, Worker _worker)
     {
         map = _map;
         worker = _worker;
-    }
 
-    public override int GetHashCode()
-    {
+        //var item = (int)Sokoban.Block.Worker;
+        //(item, map.map[worker.y, worker.x]) = (map.map[worker.y, worker.x], item);
+        //char[] str = new char[map.map.Length];
+        //Buffer.BlockCopy(map.map, 0, str, 0, map.map.Length);
+        //hash = new string(str).GetHashCode();
+        //map.map[worker.y, worker.x] = item;
+
         string str = "";
         for (int row = 0; row < map.GetRowsNum(); row++)
         {
@@ -97,7 +102,12 @@ partial class State
                 }
             }
         }
-        return str.GetHashCode();
+        hash = str.GetHashCode();
+    }
+
+    public override int GetHashCode()
+    {
+        return hash;
     }
 
     public override bool Equals(object? obj)
