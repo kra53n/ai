@@ -357,9 +357,9 @@ class Sokoban
     }
 }
 
-class Block
+partial class Block
 {
-    public enum Type
+    public enum Type : byte
     {
         Floor = 0,
         Wall,
@@ -370,15 +370,29 @@ class Block
         Empty = 9,
     };
 
-    public int x;
-    public int y;
+    public byte x;
+    public byte y;
     public Type type;
 
-    public Block(int _x, int _y, Type _type)
+    public Block(byte _x, byte _y, Type _type)
     {
         x = _x;
         y = _y;
         type = _type;
+    }    
+    
+    public Block(int _x, int _y, Type _type)
+    {
+        x = (byte)_x;
+        y = (byte)_y;
+        type = _type;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj == null) return false;
+        var o = obj as Block;
+        return o.x == x && o.y == y;
     }
 
     public static List<Block> CloneBlocks(List<Block> old)
@@ -392,7 +406,7 @@ class Block
     }
 }
 
-class Map : ICloneable
+partial class Map : ICloneable
 {
     // TODO(kra53n): look at memory usage if we will use Block.Type instead of byte
     public byte[,]? map;
@@ -438,7 +452,7 @@ class Map : ICloneable
         Sokoban.baseState = new State(new List<Block>(boxes), (Worker)Sokoban.worker.Clone());
     }
 
-    public IEnumerable<Tuple<int, int>> FindBlocks(Block.Type block)
+    public IEnumerable<(int col, int row)> FindBlocks(Block.Type block)
     {
         for (int row = 0; row < GetRowsNum(); row++)
         {
@@ -446,7 +460,7 @@ class Map : ICloneable
             {
                 if (map[row, col] == (int)block)
                 {
-                    yield return new(col, row);
+                    yield return (col, row);
                 }
             }
         }
@@ -602,8 +616,8 @@ class Map : ICloneable
         {
             if (worker.x == b.x && worker.y == b.y)
             {
-                b.x = x;
-                b.y = y;
+                b.x = (byte)x;
+                b.y = (byte)y;
             }
         }
     }

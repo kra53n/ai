@@ -80,21 +80,31 @@ partial class State
         boxes = _boxes;
         worker = _worker;
 
-        //var item = (int)Sokoban.Block.Worker;
-        //(item, map.map[worker.y, worker.x]) = (map.map[worker.y, worker.x], item);
-        //char[] str = new char[map.map.Length];
-        //Buffer.BlockCopy(map.map, 0, str, 0, map.map.Length);
-        //hash = new string(str).GetHashCode();
-        //map.map[worker.y, worker.x] = item;
-
         string str = "";
+        var map = (Map)Sokoban.map.Clone();
+        map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
         foreach (Block b in boxes)
         {
-            str += b.x;
-            str += b.y;
+            map.SetCell(b.y, b.x, (byte)Block.Type.Box);
         }
-        str += worker.x;
-        str += worker.y;
+        for (int row = 0; row < map.GetRowsNum(); row++)
+        {
+            for (int col = 0; col < map.GetColsNum(); col++)
+            {
+                str += (int)map.GetCell(row, col);
+            }
+        }
+        //hash = str.GetHashCode();
+        //foreach (Block b in boxes)
+        //{
+        //    str += b.x;
+        //    str += "x";
+        //    str += b.y;
+        //    str += "x";
+        //}
+        //str += worker.x;
+        //str += "x";
+        //str += worker.y;
         hash = str.GetHashCode();
     }
 
@@ -110,7 +120,25 @@ partial class State
             return false;
         }
         State state = (State)obj;
-        return hash == state.hash;
+        //foreach (var (b1, b2) in state.boxes.Zip(boxes))
+        //{
+        //    if (b1.x != b2.x || b1.y != b2.y)
+        //    {
+        //        return false;
+        //    }
+        //}
+        foreach (var b1 in boxes)
+        {
+            if (!state.boxes.Contains(b1))
+            { 
+                return false;
+            }
+        }
+        if (worker.x != state.worker.x || worker.y != state.worker.y)
+        {
+            return false;
+        }
+        return true;
     }
 
     public bool IsGoal()
@@ -120,7 +148,6 @@ partial class State
 
     public IEnumerable<State> GetGeneratedStates()
     {
-        List<State> states = new List<State>();
         foreach (Worker.Direction direction in Worker.directions)
         {
             var b = Block.CloneBlocks(boxes);
