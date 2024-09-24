@@ -2,7 +2,9 @@
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using static Worker;
 
 class Sokoban
@@ -20,24 +22,15 @@ class Sokoban
     public static Mode mode = Mode.Game;
     public static Texture2D texture;
     public static Map? map;
+    public static List<Block>? boxes = null;
     public static Worker worker = new Worker(0, 0);
+
     public static State? baseState = null;
     public static List<State>? states = null;
     public static int currStateIdx = 0;
 
     private static Action ControlsProcessor = GameControlsProcessor;
     public static string searchMethod = "";
-
-    public enum Block : byte
-    {
-        Floor = 0,
-        Wall,
-        Box,
-        Mark,
-        BoxOnMark,
-        Worker,
-        Empty = 9,
-    };
 
     public enum Mode
     {
@@ -61,7 +54,7 @@ class Sokoban
             {
                 case Mode.Replay:
                 case Mode.Game:
-                    map.Draw();
+                    map.Draw(boxes);
                     Update();
                     break;
                 case Mode.Edit:
@@ -158,19 +151,19 @@ class Sokoban
     {
         if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
         {
-            worker.Up(map);
+            worker.Up(boxes);
         }
         if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
         {
-            worker.Left(map);
+            worker.Left(boxes);
         }
         if (Raylib.IsKeyPressed(KeyboardKey.S) || Raylib.IsKeyPressed(KeyboardKey.Down))
         {
-            worker.Down(map);
+            worker.Down(boxes);
         }
         if (Raylib.IsKeyPressed(KeyboardKey.D) || Raylib.IsKeyPressed(KeyboardKey.Right))
         {
-            worker.Right(map);
+            worker.Right(boxes);
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.One))
@@ -195,7 +188,7 @@ class Sokoban
             ToggleReplayGameMode();
         }
 
-        if (map.Complete())
+        if (map.Complete(boxes))
         {
             Raylib.SetWindowTitle("Игра пройдена");
         }
@@ -244,7 +237,6 @@ class Sokoban
         {
             Animator.Pause();
             SwitchToFirstState();
-            map = (Map)baseState.map.Clone();
             worker = (Worker)baseState.worker.Clone();
             return;
         }
@@ -316,6 +308,7 @@ class Sokoban
             for (int j = 0; j < cols.Length; j++)
                 content[i, j] = (byte)(cols[j] - '0');
         }
+        states = null;
         return content;
     }
 
@@ -331,7 +324,7 @@ class Sokoban
         {
             return false;
         }
-        map = states[currStateIdx].map;
+        boxes = states[currStateIdx].boxes;
         worker = states[currStateIdx].worker;
         return true;
     }
@@ -343,7 +336,7 @@ class Sokoban
             return;
         }
         currStateIdx = Math.Min(currStateIdx + 1, states.Count - 1);
-        map = states[currStateIdx].map;
+        boxes = states[currStateIdx].boxes;
         worker = states[currStateIdx].worker;
     }
 
@@ -354,7 +347,7 @@ class Sokoban
             return;
         }
         currStateIdx = Math.Max(currStateIdx - 1, 0);
-        map = states[currStateIdx].map;
+        boxes = states[currStateIdx].boxes;
         worker = states[currStateIdx].worker;
     }
 
@@ -364,8 +357,44 @@ class Sokoban
     }
 }
 
+class Block
+{
+    public enum Type
+    {
+        Floor = 0,
+        Wall,
+        Box,
+        Mark,
+        BoxOnMark,
+        Worker,
+        Empty = 9,
+    };
+
+    public int x;
+    public int y;
+    public Type type;
+
+    public Block(int _x, int _y, Type _type)
+    {
+        x = _x;
+        y = _y;
+        type = _type;
+    }
+
+    public static List<Block> CloneBlocks(List<Block> old)
+    {
+        List<Block> blocks = new();
+        foreach (Block b in old)
+        {
+            blocks.Add((Block)b.MemberwiseClone());
+        }
+        return blocks;
+    }
+}
+
 class Map : ICloneable
 {
+    // TODO(kra53n): look at memory usage if we will use Block.Type instead of byte
     public byte[,]? map;
     public int x;
     public int y;
@@ -378,22 +407,38 @@ class Map : ICloneable
     public void Load(byte[,] _map)
     {
         map = _map;
+        List<Block> boxes = new ();
         for (int row = 0; row < GetRowsNum(); row++)
         {
             for (int col = 0; col < GetColsNum(); col++)
             {
-                if (GetCell(row, col) == (int)Sokoban.Block.Worker)
+                byte cell = GetCell(row, col);
+                switch (cell)
                 {
+                case (byte)Block.Type.Worker:
                     Sokoban.worker = new Worker(col, row);
-                    SetCell(row, col, (int)Sokoban.Block.Floor);
+                    SetCell(row, col, (int)Block.Type.Floor);
+                    break;
+                case (byte)Block.Type.Box:
+                case (byte)Block.Type.BoxOnMark:
+                    boxes.Add(new Block(col, row, Block.Type.Box));
+                    if (cell == (byte)Block.Type.BoxOnMark)
+                    {
+                        map[row, col] = (byte)Block.Type.Mark;
+                    }
+                    else if (cell == (byte)Block.Type.Box)
+                    {
+                        map[row, col] = (byte)Block.Type.Floor;
+                    }
                     break;
                 }
             }
         }
-        Sokoban.baseState = new State((Map)this.Clone(), (Worker)Sokoban.worker.Clone());
+        Sokoban.boxes = boxes;
+        Sokoban.baseState = new State(new List<Block>(boxes), (Worker)Sokoban.worker.Clone());
     }
 
-    public IEnumerable<Tuple<int, int>> FindBlocks(Sokoban.Block block)
+    public IEnumerable<Tuple<int, int>> FindBlocks(Block.Type block)
     {
         for (int row = 0; row < GetRowsNum(); row++)
         {
@@ -407,7 +452,7 @@ class Map : ICloneable
         }
     }
 
-    public void Draw()
+    public void Draw(List<Block> boxes)
     {
         int _x = x;
         int _y = y;
@@ -417,26 +462,34 @@ class Map : ICloneable
             {
                 switch (map[row, col])
                 {
-                case (int)Sokoban.Block.Floor:
+                case (byte)Block.Type.Floor:
                     Floor.Draw(_x, _y);
                     break;
-                case (int)Sokoban.Block.Wall:
+                case (byte)Block.Type.Wall:
                     Wall.Draw(_x, _y);
                     break;
-                case (int)Sokoban.Block.Box:
-                    Box.Draw(_x, _y);
-                    break;
-                case (int)Sokoban.Block.Mark:
+                case (byte)Block.Type.Mark:
                     Mark.Draw(_x, _y);
-                    break;
-                case (int)Sokoban.Block.BoxOnMark:
-                    BoxOnMark.Draw(_x, _y);
                     break;
                 }
                 _x += (int)(Sokoban.BLOCK_SIZE * Sokoban.SCALE);
             }
             _y += (int)(Sokoban.BLOCK_SIZE * Sokoban.SCALE);
             _x = x;
+        }
+        foreach (Block b in boxes)
+        {
+            _x = b.x * (int)(Sokoban.BLOCK_SIZE * Sokoban.SCALE);
+            _y = b.y * (int)(Sokoban.BLOCK_SIZE * Sokoban.SCALE);
+            byte cell = GetCell(b.y, b.x);
+            if (cell == (byte)Block.Type.Mark)
+            {
+                BoxOnMark.Draw(_x, _y);
+            }
+            else if (cell == (byte)Block.Type.Floor)
+            {
+                Box.Draw(_x, _y);
+            }
         }
         Sokoban.worker.Draw(x, y);
     }
@@ -451,89 +504,68 @@ class Map : ICloneable
         return map.GetLength(1);
     }
 
-    public int GetCell(int row, int col)
+    public byte GetCell(int row, int col)
     {
         return map[row, col];
     }
 
     public void SetCell(int row, int col, byte val)
     {
-        if (val == (int)Sokoban.Block.Box && map[row, col] == (int)Sokoban.Block.Mark)
-        {
-            map[row, col] = (int)Sokoban.Block.BoxOnMark;
-        } 
-        else
-        {
-            map[row, col] = val;
-        }
+        map[row, col] = val;
     }
-    public bool Complete()
+
+    public bool Complete(List<Block> boxes)
     {
-        for (int row = 0; row < GetRowsNum(); row++)
+        foreach (Block b in boxes)
         {
-            for (int col = 0; col < GetColsNum(); col++)
+            if (GetCell(b.y, b.x) != (byte)Block.Type.Mark)
             {
-                if (GetCell(row, col) == (int)Sokoban.Block.Mark)
-                {
-                    return false;
-                }
+                return false;
             }
         }
         return true;
     }
 
-    // Worker Stepped if he is on Wall, Box or BoxOnMark
-    public bool Stepped(in Worker worker)
+    public bool Stepped(in Worker worker, List<Block> boxes)
     {
-        return !(map[worker.y, worker.x] == (int)Sokoban.Block.Floor || map[worker.y, worker.x] == (int)Sokoban.Block.Mark);
+        foreach (Block b in boxes)
+        {
+            if (worker.x == b.x && worker.y == b.y)
+            {
+                return true;
+            }
+        }
+        return map[worker.y, worker.x] == (byte)Block.Type.Wall;
     }
 
-    public bool CanMoveBox(in Worker worker, Worker.Direction dir)
+    public bool CanMoveBox(in Worker worker, Worker.Direction dir, List<Block> boxes)
     {
         if (
             worker.x == 0 || worker.y == 0 ||
             worker.x == map.GetLength(1)-1 || worker.y == map.GetLength(0)-1 ||
-            GetCell(worker.y, worker.x) == (int)Sokoban.Block.Wall
+            GetCell(worker.y, worker.x) == (byte)Block.Type.Wall
         )
         {
             return false;
         }
-        int val;
-        switch (dir)
+        int x = worker.x + dir.GetX();
+        int y = worker.y + dir.GetY();
+        foreach (Block b1 in boxes)
         {
-        case Worker.Direction.Up:
-            val = map[worker.y-1, worker.x];
-            break;
-        case Worker.Direction.Left:
-            val = map[worker.y, worker.x-1];
-            break; 
-        case Worker.Direction.Down:
-            val = map[worker.y+1, worker.x];
-            break;
-        case Worker.Direction.Right:
-            val = map[worker.y, worker.x+1];
-            break;
-        default:
-            return false;
+            foreach(Block b2 in boxes)
+            {
+                if (b1.x == worker.x && b1.y == worker.y && b2.x == x && b2.y == y)
+                {
+                    return false;
+                }
+            }
         }
-        return val == (int)Sokoban.Block.Floor || val == (int)Sokoban.Block.Mark;
+        int cell = map[y, x];
+        return cell != (byte)Block.Type.Wall;
     }
 
-    public void MoveBox(in Worker worker, Worker.Direction dir)
+    public void MoveBox(in Worker worker, Worker.Direction dir, List<Block> boxes)
     {
-        int val = 0;
-        val = (int)Sokoban.Block.Box;
-        switch (map[worker.y, worker.x])
-        {
-            case (int)Sokoban.Block.Box:
-                map[worker.y, worker.x] = (int)Sokoban.Block.Floor;
-                val = (int)Sokoban.Block.Box;
-                break;
-            case (int)Sokoban.Block.BoxOnMark:
-                map[worker.y, worker.x] = (int)Sokoban.Block.Mark;
-                val = (int)Sokoban.Block.BoxOnMark;
-                break;
-        }
         int x = worker.x;
         int y = worker.y;
         switch (dir)
@@ -554,14 +586,25 @@ class Map : ICloneable
             return;
         }
 
-        switch (GetCell(y, x))
+        // TODO(kra53n): delete codes below
+        //for (int i = 0; i < boxes.Count; i++)
+        //{
+        //    if (worker.x == boxes[i].x && worker.y == boxes[i].y)
+        //    {
+        //        Block b = boxes[i];
+        //        b.x = x;
+        //        b.y = y;
+        //        boxes[i] = b;
+        //        break;
+        //    }
+        //}
+        foreach (Block b in boxes)
         {
-        case (int)Sokoban.Block.Floor:
-            SetCell(y, x, (int)Sokoban.Block.Box);
-            break;
-        case (int)Sokoban.Block.Mark:
-            SetCell(y, x, (int)Sokoban.Block.BoxOnMark); 
-            break;
+            if (worker.x == b.x && worker.y == b.y)
+            {
+                b.x = x;
+                b.y = y;
+            }
         }
     }
 
@@ -696,33 +739,33 @@ class Worker : ICloneable
         Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 
-    public void Move(Map map, Direction direction)
+    public void Move(Direction direction, List<Block> boxes)
     {
         switch (direction)
         {
         case Direction.Up:
-            Up(map);
+            Up(boxes);
             break;
         case Direction.Left:
-            Left(map);
+            Left(boxes);
             break;
         case Direction.Down:
-            Down(map);
+            Down(boxes);
             break;
         case Direction.Right:
-            Right(map);
+            Right(boxes);
             break;
         }
     }
 
-    public void Up(Map map)
+    public void Up(List<Block> boxes)
     {
         y -= 1;
-        if (map.Stepped(this))
+        if (Sokoban.map.Stepped(this, boxes))
         {
-            if (map.CanMoveBox(this, Worker.Direction.Up))
+            if (Sokoban.map.CanMoveBox(this, Worker.Direction.Up, boxes))
             {
-                map.MoveBox(this, Worker.Direction.Up);
+                Sokoban.map.MoveBox(this, Worker.Direction.Up, boxes);
             }
             else
             {
@@ -731,14 +774,14 @@ class Worker : ICloneable
         }
     }
 
-    public void Left(Map map)
+    public void Left(List<Block> boxes)
     {
         x -= 1;
-        if (map.Stepped(this))
+        if (Sokoban.map.Stepped(this, boxes))
         {
-            if (map.CanMoveBox(this, Worker.Direction.Left))
+            if (Sokoban.map.CanMoveBox(this, Worker.Direction.Left, boxes))
             {
-                map.MoveBox(this, Worker.Direction.Left);
+                Sokoban.map.MoveBox(this, Worker.Direction.Left, boxes);
             }
             else
             {
@@ -747,14 +790,14 @@ class Worker : ICloneable
         }
     }
 
-    public void Down(Map map)
+    public void Down(List<Block> boxes)
     {
         y += 1;
-        if (map.Stepped(this))
+        if (Sokoban.map.Stepped(this, boxes))
         {
-            if (map.CanMoveBox(this, Worker.Direction.Down))
+            if (Sokoban.map.CanMoveBox(this, Worker.Direction.Down, boxes))
             {
-                map.MoveBox(this, Worker.Direction.Down);
+                Sokoban.map.MoveBox(this, Worker.Direction.Down, boxes);
             }
             else
             {
@@ -763,14 +806,14 @@ class Worker : ICloneable
         }
     }
 
-    public void Right(Map map)
+    public void Right(List<Block> boxes)
     {
         x += 1;
-        if (map.Stepped(this))
+        if (Sokoban.map.Stepped(this, boxes))
         {
-            if (map.CanMoveBox(this, Worker.Direction.Right))
+            if (Sokoban.map.CanMoveBox(this, Worker.Direction.Right, boxes))
             {
-                map.MoveBox(this, Worker.Direction.Right);
+                Sokoban.map.MoveBox(this, Worker.Direction.Right, boxes);
             }
             else
             {

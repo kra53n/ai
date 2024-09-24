@@ -7,31 +7,17 @@ using System.Text.RegularExpressions;
 
 class Editor
 {
-    private class EditorBlock
-    {
-        public int x;
-        public int y;
-        public Sokoban.Block? type;
-
-        public EditorBlock(int _x, int _y, Sokoban.Block _type)
-        {
-            x = _x;
-            y = _y;
-            type = _type;
-        }
-    }
-
-    private static List<EditorBlock> blocks = new List<EditorBlock> {
-        new EditorBlock(Sokoban.BLOCK_SIZE * 0, 0, Sokoban.Block.Floor),
-        new EditorBlock(Sokoban.BLOCK_SIZE * 1, 0, Sokoban.Block.Wall),
-        new EditorBlock(Sokoban.BLOCK_SIZE * 2, 0, Sokoban.Block.Box),
-        new EditorBlock(Sokoban.BLOCK_SIZE * 3, 0, Sokoban.Block.Mark),
-        new EditorBlock(Sokoban.BLOCK_SIZE * 4, 0, Sokoban.Block.BoxOnMark),
-        new EditorBlock(Sokoban.BLOCK_SIZE * 5, 0, Sokoban.Block.Worker),
+    private static List<Block> blocks = new List<Block> {
+        new Block(Sokoban.BLOCK_SIZE * 0, 0, Block.Type.Floor),
+        new Block(Sokoban.BLOCK_SIZE * 1, 0, Block.Type.Wall),
+        new Block(Sokoban.BLOCK_SIZE * 2, 0, Block.Type.Box),
+        new Block(Sokoban.BLOCK_SIZE * 3, 0, Block.Type.Mark),
+        new Block(Sokoban.BLOCK_SIZE * 4, 0, Block.Type.BoxOnMark),
+        new Block(Sokoban.BLOCK_SIZE * 5, 0, Block.Type.Worker),
     };
     private static int defaultBlocksCount = blocks.Count;
 
-    private static Sokoban.Block? currBlock;
+    private static Block.Type? currBlock;
     private static bool isSaved = false;
 
     private static Func<bool> IsLeftMouseButtonDown = () => Raylib.IsMouseButtonDown(MouseButton.Left) || Raylib.IsKeyDown(KeyboardKey.One);
@@ -93,7 +79,7 @@ class Editor
                     Raylib.SetWindowTitle($"Saved as ({Directory.GetCurrentDirectory() + $"/level{minIndex}.txt"})");
                 }
             }
-        } 
+        }
         else
         {
             if (Raylib.IsKeyPressed(KeyboardKey.S))
@@ -105,7 +91,7 @@ class Editor
                     Raylib.SetWindowTitle($"Saved as ({Directory.GetCurrentDirectory() + $"/level.txt"})");
                 }
             }
-        }       
+        }
     }
 
     public static void Draw()
@@ -129,9 +115,9 @@ class Editor
         int maxY = 0;
         int minX = int.MaxValue;
         int minY = int.MaxValue;
-        foreach (EditorBlock block in blocks)
+        foreach (Block block in blocks)
         {
-            if (block.type != Sokoban.Block.Empty && block.y != 0)
+            if (block.type != Block.Type.Empty && block.y != 0)
             {
                 maxX = Math.Max(maxX, block.x);
                 maxY = Math.Max(maxY, block.y);
@@ -142,7 +128,7 @@ class Editor
         for (int i = blocks.Count - 1; i >= 0; i--)
         {
             var block = blocks[i];
-            if (block.type == Sokoban.Block.Empty && (block.x < minX || block.x > maxX || block.y < minY || block.y > maxY))
+            if (block.type == Block.Type.Empty && (block.x < minX || block.x > maxX || block.y < minY || block.y > maxY))
             {
                 blocks.RemoveAt(i);
             }
@@ -162,7 +148,7 @@ class Editor
                 level[i, j] = 9;
             }
         }
-        foreach (EditorBlock block in blocks)
+        foreach (Block block in blocks)
         {
             int v;
             if (block.type == null)
@@ -181,7 +167,7 @@ class Editor
         }
         return level;
     }
-    
+
     private static string[] byte2DArrayToStringArray(byte[,] intArr)
     {
         string[] res = new string[intArr.GetLength(0)];
@@ -212,42 +198,42 @@ class Editor
         {
             for (int j = 0; j < map.GetLength(1); j++)
             {
-                blocks.Add(new EditorBlock(j * Sokoban.BLOCK_SIZE, i * Sokoban.BLOCK_SIZE + Sokoban.BLOCK_SIZE, (Sokoban.Block)map[i, j]));
+                blocks.Add(new Block(j * Sokoban.BLOCK_SIZE, i * Sokoban.BLOCK_SIZE + Sokoban.BLOCK_SIZE, (Block.Type)map[i, j]));
             }
         }
     }
 
     private static void DrawBlocks()
     {
-        foreach (EditorBlock block in blocks)
+        foreach (Block block in blocks)
         {
             switch (block.type)
             {
-            case Sokoban.Block.Floor:
-                Floor.Draw(block.x, block.y);
-                break;
-            case Sokoban.Block.Wall:
-                Wall.Draw(block.x, block.y);
-                break;
-            case Sokoban.Block.Box:
-                Box.Draw(block.x, block.y);
-                break;
-            case Sokoban.Block.Mark:
-                Mark.Draw(block.x, block.y);
-                break;
-            case Sokoban.Block.BoxOnMark:
-                BoxOnMark.Draw(block.x, block.y);
-                break;
-            case Sokoban.Block.Worker:
-                Worker.DrawStatic(block.x, block.y);
-                break;
+                case Block.Type.Floor:
+                    Floor.Draw(block.x, block.y);
+                    break;
+                case Block.Type.Wall:
+                    Wall.Draw(block.x, block.y);
+                    break;
+                case Block.Type.Box:
+                    Box.Draw(block.x, block.y);
+                    break;
+                case Block.Type.Mark:
+                    Mark.Draw(block.x, block.y);
+                    break;
+                case Block.Type.BoxOnMark:
+                    BoxOnMark.Draw(block.x, block.y);
+                    break;
+                case Block.Type.Worker:
+                    Worker.DrawStatic(block.x, block.y);
+                    break;
             }
         }
     }
 
-   private static bool MouseOnBlock(Vector2 mouse)
+    private static bool MouseOnBlock(Vector2 mouse)
     {
-        foreach (EditorBlock block in blocks)
+        foreach (Block block in blocks)
         {
             if (CalculateNearest((int)mouse.X, Sokoban.BLOCK_SIZE) == block.x && CalculateNearest((int)mouse.Y, Sokoban.BLOCK_SIZE) == block.y)
             {
@@ -270,9 +256,9 @@ class Editor
         return mouse;
     }
 
-    private static Sokoban.Block? GetBlock(Vector2 p)
+    private static Block.Type? GetBlock(Vector2 p)
     {
-        foreach (EditorBlock block in blocks)
+        foreach (Block block in blocks)
         {
             if (block.x == p.X && block.y == p.Y)
             {
@@ -284,17 +270,17 @@ class Editor
 
     private static void InsertBlock(Vector2 p)
     {
-        foreach (EditorBlock block in blocks)
+        foreach (Block block in blocks)
         {
             if (block.x == p.X && block.y == p.Y)
             {
-                block.type = currBlock;
+                block.type = (Block.Type)currBlock;
                 return;
             }
         }
         if (currBlock != null)
         {
-            blocks.Add(new EditorBlock((int)p.X, (int)p.Y, (Sokoban.Block)currBlock));
+            blocks.Add(new Block((int)p.X, (int)p.Y, (Block.Type)currBlock));
         }
     }
 }
