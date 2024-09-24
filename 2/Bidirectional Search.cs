@@ -9,6 +9,20 @@ using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 
+partial class Map
+{
+    public byte GetCell(int row, int col, List<Block> boxes)
+    {
+        foreach (var box in boxes)
+        {
+            if (box.x == col && box.y == row)
+            {
+                return (byte)Block.Type.Box;
+            }
+        }
+        return map[row, col];
+    }
+}
 
 partial class State
 {
@@ -22,27 +36,30 @@ partial class State
             var wColNew = w.x + direction.GetX();
             var checkBoxRow = w.y - direction.GetY();
             var checkBoxCol = w.x - direction.GetX();
-            if (Sokoban.map.GetCell(wRowNew, wColNew) != (byte)Block.Type.Floor && Sokoban.map.GetCell(wRowNew, wColNew) != (byte)Block.Type.Mark)
+            var block = Sokoban.map.GetCell(wRowNew, wColNew, b);
+            if (block != (byte)Block.Type.Floor && block != (byte)Block.Type.Mark)
             {
                 continue;
             }
-            w.Move(direction, b);
+            w.x = wColNew;
+            w.y = wRowNew;
             yield return new State(b, w);
-            b = Block.CloneBlocks(boxes);
-            w = (Worker)w.Clone();
-            if (Sokoban.map.GetCell(checkBoxRow, checkBoxCol) == (byte)Block.Type.BoxOnMark)
-            {
-                Sokoban.map.SetCell(checkBoxRow, checkBoxCol, (byte)Block.Type.Mark);
-            }
-            else if (Sokoban.map.GetCell(checkBoxRow, checkBoxCol) == (byte)Block.Type.Box)
-            {
-                Sokoban.map.SetCell(checkBoxRow, checkBoxCol, (byte)Block.Type.Floor);
-            }
-            else
+            
+            if (Sokoban.map.GetCell(checkBoxRow, checkBoxCol, b) != (byte)Block.Type.Box)
             {
                 continue;
             }
-            Sokoban.map.SetCell(w.y - direction.GetY(), w.x - direction.GetX(), (byte)Block.Type.Box);
+            b = Block.CloneBlocks(b);
+            w = (Worker)w.Clone();
+            foreach (var box in b)
+            {
+                if (box.x == checkBoxCol && box.y == checkBoxRow)
+                {
+                    box.y = (byte)(w.y - direction.GetY());
+                    box.x = (byte)(w.x - direction.GetX());
+                    break;
+                }
+            }
             yield return new State(b, w);
         }
     }
@@ -61,10 +78,8 @@ class BidirectionalSearch : ISearcher<List<State>>
     {
         statistic = new();
 
-        openNodes = new();
-        openNodes.Add(new State(Sokoban.baseState.boxes, Sokoban.baseState.worker));
-        openNodesReversed = new();
-        GenerateFinalStates(Sokoban.baseState.boxes, Sokoban.baseState.worker).ForEach(i => openNodesReversed.Add(i));
+        openNodes = [new State(Sokoban.baseState.boxes, Sokoban.baseState.worker)];
+        openNodesReversed = [.. GenerateFinalStates()];
         closedNodes = new();
         closedNodesReversed = new();
     }
@@ -165,10 +180,9 @@ class BidirectionalSearch : ISearcher<List<State>>
 
     }
 
-    private List<State> GenerateFinalStates(List<Block> _boxes, Worker worker)
+    private IEnumerable<State> GenerateFinalStates()
     {
         List<Block> boxes = new();
-        var states = new List<State>();
 
         foreach ((int col, int row) in Sokoban.map.FindBlocks(Block.Type.Mark))
         {
@@ -181,15 +195,14 @@ class BidirectionalSearch : ISearcher<List<State>>
             {
                 var checkFreeRow = b.y + direction.GetY();
                 var checkFreeCol = b.x + direction.GetX();
-                if (Sokoban.map.GetCell(checkFreeRow, checkFreeCol) == (byte)Block.Type.Floor)
+                if (Sokoban.map.GetCell(checkFreeRow, checkFreeCol, boxes) == (byte)Block.Type.Floor)
                 {
-                    Worker w = (Worker)worker.Clone();
+                    Worker w = (Worker)Sokoban.worker.Clone();
                     w.x = checkFreeCol;
                     w.y = checkFreeRow;
-                    states.Add(new State(Block.CloneBlocks(boxes), w));
+                    yield return new State(Block.CloneBlocks(boxes), w);
                 }
             }
         }
-        return states;
     }
 }
