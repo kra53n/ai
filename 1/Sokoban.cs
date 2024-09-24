@@ -868,7 +868,10 @@ class Animator
     public static void Play()
     {
         animating = true;
-        Raylib.SetWindowTitle($"⏵ Режим воспроизведения (x{Sokoban.playbackSpeed}) - " + Sokoban.searchMethod);
+        if (Sokoban.mode == Sokoban.Mode.Replay)
+        {
+            Raylib.SetWindowTitle($"⏵ Режим воспроизведения (x{Sokoban.playbackSpeed}) - " + Sokoban.searchMethod);
+        }
         lastFrameTime = Raylib.GetTime();
         if (Sokoban.LastState())
         {
@@ -879,7 +882,10 @@ class Animator
     public static void Pause()
     {
         animating = false;
-        Raylib.SetWindowTitle($"⏸ Режим воспроизведения (x{Sokoban.playbackSpeed}) - " + Sokoban.searchMethod);
+        if (Sokoban.mode == Sokoban.Mode.Replay)
+        {
+            Raylib.SetWindowTitle($"⏸ Режим воспроизведения (x{Sokoban.playbackSpeed}) - " + Sokoban.searchMethod);
+        }
     }
 
     public static void Animate()

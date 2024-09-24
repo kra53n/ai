@@ -25,7 +25,7 @@ class DepthFirstSearch : ISearcher<List<State>>
                     nxtOpenNodes.Push(state);
                     continue;
                 }
-                statistic.Collect(state, openNodes, closedNodes, lvl);
+                statistic.Collect(openNodes, closedNodes, lvl);
                 if (state.IsGoal())
                 {
                     statistic.Print();
@@ -78,7 +78,7 @@ class DepthFirstSearchStatistic
     private int maxNodesNum = 0;
     private int currLvl;
 
-    public void Collect(State currState, Stack<DepthFirstSearchState> openNodes, Stack<DepthFirstSearchState> closeNodes, int lvl)
+    public void Collect(Stack<DepthFirstSearchState> openNodes, Stack<DepthFirstSearchState> closeNodes, int lvl)
     {
         iters++;
         currOpenNodesNum = openNodes.Count();

@@ -65,10 +65,54 @@ partial class State
     }
 }
 
+partial class BidirectionalStatistic : Statistic
+{
+    protected int currOpenNodesNumR = 0;
+    protected int maxOpenNodesNumR = 0;
+    protected int currClosedNodesNumR = 0;
+    protected int maxClosedNodesNumR = 0;
+
+    public void Collect(ICollection<State> openNodes, ICollection<State> closeNodes)
+    {
+        iters++;
+        currOpenNodesNum = openNodes.Count();
+        currClosedNodesNum = closeNodes.Count();
+        maxOpenNodesNum = Math.Max(maxOpenNodesNum, currOpenNodesNum);
+        maxClosedNodesNum = Math.Max(maxClosedNodesNum, currClosedNodesNum);
+        maxNodesNum = Math.Max(maxNodesNum, currOpenNodesNum + currClosedNodesNum + currClosedNodesNumR + currOpenNodesNumR);
+    }
+
+    public void CollectReversed(ICollection<State> openNodes, ICollection<State> closeNodes)
+    {
+        iters++;
+        currOpenNodesNumR = openNodes.Count();
+        currClosedNodesNumR = closeNodes.Count();
+        maxOpenNodesNumR = Math.Max(maxOpenNodesNumR, currOpenNodesNumR);
+        maxClosedNodesNumR = Math.Max(maxClosedNodesNumR, currClosedNodesNumR);
+        maxNodesNum = Math.Max(maxNodesNum, currOpenNodesNum + currClosedNodesNum + currClosedNodesNumR + currOpenNodesNumR);
+    }
+
+    public void Print()
+    {
+        string s = "\n\tРезультаты двунаправленного поиска";
+        s += "\n\n";
+        s += $"Итераций: {iters}\n";
+        s += $"Открытые узлы:\n";
+        s += $"\tКоличество при завершении: {currOpenNodesNum + currOpenNodesNumR}\n";
+        s += $"\tМаксимальное количество: {maxOpenNodesNum + maxClosedNodesNumR}\n";
+        s += $"Закрыте узлы:\n";
+        s += $"\tКоличество при завершении: {currClosedNodesNum + currClosedNodesNumR}\n";
+        s += $"\tМаксимальное количество: {maxClosedNodesNum + maxClosedNodesNumR}\n";
+        s += $"Максимальное количество хранимых в памяти узлов: {maxNodesNum}\n";
+        s += "\n";
+        Console.WriteLine(s);
+    }
+}
+
 
 class BidirectionalSearch : ISearcher<List<State>>
 {
-    private Statistic? statistic;
+    private BidirectionalStatistic? statistic;
     private HashSet<State>? openNodes;
     private HashSet<State>? openNodesReversed;
     private HashSet<State>? closedNodes;
@@ -89,16 +133,13 @@ class BidirectionalSearch : ISearcher<List<State>>
         HashSet<State> newO = new();
         foreach (var state in openNodes)
         {
-            //statistic.Collect(state, openNodes, closedNodes);
-
+            statistic.Collect(openNodes, closedNodes);
             closedNodes.Add(state);
             foreach (State s in state.GetGeneratedStates())
             {
                 openNodesReversed.TryGetValue(s, out var item);
-                //if (item == null) { item = closedNodesReversed.GetItem(s); }
                 if (item != null)
                 {
-                    statistic.Print(Searcher.Type.Bidirectional);
                     List<State> l = item.Unwrap();
                     l.Reverse();
                     var res = state.Unwrap();
@@ -120,20 +161,14 @@ class BidirectionalSearch : ISearcher<List<State>>
     {
         HashSet<State> newO = new();
         foreach (var state in openNodesReversed)
-        {
-            //statistic.Collect(state, openNodesReversed, closedNodesReversed);
-
+        {           
+            statistic.CollectReversed(openNodesReversed, closedNodesReversed);
             closedNodesReversed.Add(state);
             foreach (State s in state.GenerateReversedStates())
             {
-                //if (item == null) {
-                //    item = closedNodes.GetItem(s);
-                //}
                 openNodes.TryGetValue(s, out var item);
-                //if (item == null) { item = closedNodes.GetItem(s); }
                 if (item != null)
                 {
-                    statistic.Print(Searcher.Type.Bidirectional);
                     List<State> l = state.Unwrap();
                     l.Reverse();
                     var res = item.Unwrap();
@@ -174,6 +209,7 @@ class BidirectionalSearch : ISearcher<List<State>>
 
             if (result != null)
             {
+                statistic.Print();
                 return result;
             }
         }
