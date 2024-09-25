@@ -22,7 +22,7 @@ class Sokoban
     public static Mode mode = Mode.Game;
     public static Texture2D texture;
     public static Map? map;
-    public static Block[]? boxes = null;
+    public static (byte x, byte y)[]? boxes = null;
     public static Worker worker = new Worker(0, 0);
 
     public static State? baseState = null;
@@ -397,12 +397,12 @@ partial class Block
         return o.x == x && o.y == y;
     }
 
-    public static Block[] CloneBlocks(Block[] old)
+    public static (byte x, byte y)[] CloneBlocks((byte x, byte y)[] old)
     {
-        Block[] blocks = new Block[Sokoban.baseState.boxes.Length];
+        (byte x, byte y)[] blocks = new (byte x, byte y)[Sokoban.baseState.boxes.Length];
         for (int i = 0; i < Sokoban.baseState.boxes.Length; i++)
         {
-            blocks[i] = (Block)old[i].MemberwiseClone();
+            blocks[i] = ((byte x, byte y))old[i];
         }
         return blocks;
     }
@@ -423,7 +423,7 @@ partial class Map : ICloneable
     public void Load(byte[,] _map)
     {
         map = _map;
-        List<Block> boxes = new();
+        List<(byte x, byte y)> boxes = new();
         for (int row = 0; row < GetRowsNum(); row++)
         {
             for (int col = 0; col < GetColsNum(); col++)
@@ -437,7 +437,7 @@ partial class Map : ICloneable
                     break;
                 case (byte)Block.Type.Box:
                 case (byte)Block.Type.BoxOnMark:
-                    boxes.Add(new Block(col, row, Block.Type.Box));
+                    boxes.Add(((byte x, byte y))(col, row));
                     if (cell == (byte)Block.Type.BoxOnMark)
                     {
                         map[row, col] = (byte)Block.Type.Mark;
@@ -451,7 +451,7 @@ partial class Map : ICloneable
             }
         }
         Sokoban.boxes = boxes.ToArray();
-        Sokoban.baseState = new State((Block[])Sokoban.boxes.Clone(), (Worker)Sokoban.worker.Clone());
+        Sokoban.baseState = new State(((byte x, byte y)[])Sokoban.boxes.Clone(), (Worker)Sokoban.worker.Clone());
     }
 
     public IEnumerable<(int col, int row)> FindBlocks(Block.Type block)
@@ -468,7 +468,7 @@ partial class Map : ICloneable
         }
     }
 
-    public void Draw(Block[] boxes)
+    public void Draw((byte x, byte y)[] boxes)
     {
         int _x = x;
         int _y = y;
@@ -493,7 +493,7 @@ partial class Map : ICloneable
             _y += (int)(Sokoban.BLOCK_SIZE * Sokoban.SCALE);
             _x = x;
         }
-        foreach (Block b in boxes)
+        foreach ((byte x, byte y) b in boxes)
         {
             _x = b.x * (int)(Sokoban.BLOCK_SIZE * Sokoban.SCALE);
             _y = b.y * (int)(Sokoban.BLOCK_SIZE * Sokoban.SCALE);
@@ -530,9 +530,9 @@ partial class Map : ICloneable
         map[row, col] = val;
     }
 
-    public bool Complete(Block[] boxes)
+    public bool Complete((byte x, byte y)[] boxes)
     {
-        foreach (Block b in boxes)
+        foreach ((byte x, byte y) b in boxes)
         {
             if (GetCell(b.y, b.x) != (byte)Block.Type.Mark)
             {
@@ -542,9 +542,9 @@ partial class Map : ICloneable
         return true;
     }
 
-    public bool Stepped(in Worker worker, Block[] boxes)
+    public bool Stepped(in Worker worker, (byte x, byte y)[] boxes)
     {
-        foreach (Block b in boxes)
+        foreach ((byte x, byte y) b in boxes)
         {
             if (worker.x == b.x && worker.y == b.y)
             {
@@ -554,7 +554,7 @@ partial class Map : ICloneable
         return map[worker.y, worker.x] == (byte)Block.Type.Wall;
     }
 
-    public bool CanMoveBox(in Worker worker, Worker.Direction dir, Block[] boxes)
+    public bool CanMoveBox(in Worker worker, Worker.Direction dir, (byte x, byte y)[] boxes)
     {
         if (
             worker.x == 0 || worker.y == 0 ||
@@ -566,9 +566,9 @@ partial class Map : ICloneable
         }
         int x = worker.x + dir.GetX();
         int y = worker.y + dir.GetY();
-        foreach (Block b1 in boxes)
+        foreach ((byte x, byte y) b1 in boxes)
         {
-            foreach(Block b2 in boxes)
+            foreach((byte x, byte y) b2 in boxes)
             {
                 if (b1.x == worker.x && b1.y == worker.y && b2.x == x && b2.y == y)
                 {
@@ -580,7 +580,7 @@ partial class Map : ICloneable
         return cell != (byte)Block.Type.Wall;
     }
 
-    public void MoveBox(in Worker worker, Worker.Direction dir, Block[] boxes)
+    public void MoveBox(in Worker worker, Worker.Direction dir, (byte x, byte y)[] boxes)
     {
         int x = worker.x;
         int y = worker.y;
@@ -614,12 +614,12 @@ partial class Map : ICloneable
         //        break;
         //    }
         //}
-        foreach (Block b in boxes)
+        for (int i = 0; i < boxes.Length; i++)
         {
-            if (worker.x == b.x && worker.y == b.y)
+            if (worker.x == boxes[i].x && worker.y == boxes[i].y)
             {
-                b.x = (byte)x;
-                b.y = (byte)y;
+                boxes[i].x = (byte)x;
+                boxes[i].y = (byte)y;
             }
         }
     }
@@ -755,7 +755,7 @@ class Worker : ICloneable
         Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 
-    public void Move(Direction direction, Block[] boxes)
+    public void Move(Direction direction, (byte x, byte y)[] boxes)
     {
         switch (direction)
         {
@@ -774,7 +774,7 @@ class Worker : ICloneable
         }
     }
 
-    public void Up(Block[] boxes)
+    public void Up((byte x, byte y)[] boxes)
     {
         y -= 1;
         if (Sokoban.map.Stepped(this, boxes))
@@ -790,7 +790,7 @@ class Worker : ICloneable
         }
     }
 
-    public void Left(Block[] boxes)
+    public void Left((byte x, byte y)[] boxes)
     {
         x -= 1;
         if (Sokoban.map.Stepped(this, boxes))
@@ -806,7 +806,7 @@ class Worker : ICloneable
         }
     }
 
-    public void Down(Block[] boxes)
+    public void Down((byte x, byte y)[] boxes)
     {
         y += 1;
         if (Sokoban.map.Stepped(this, boxes))
@@ -822,7 +822,7 @@ class Worker : ICloneable
         }
     }
 
-    public void Right(Block[] boxes)
+    public void Right((byte x, byte y)[] boxes)
     {
         x += 1;
         if (Sokoban.map.Stepped(this, boxes))

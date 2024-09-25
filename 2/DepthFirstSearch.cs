@@ -49,7 +49,7 @@ class DepthFirstSearchState : State
 {
     public int lvl;
 
-    public DepthFirstSearchState(Block[] boxes, Worker _worker, int _lvl) : base(boxes, _worker)
+    public DepthFirstSearchState((byte x, byte y)[] boxes, Worker _worker, int _lvl) : base(boxes, _worker)
     {
         lvl = _lvl;
     }

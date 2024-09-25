@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 partial class Map
 {
-    public byte GetCell(int row, int col, Block[] boxes)
+    public byte GetCell(int row, int col, (byte x, byte y)[] boxes)
     {
         foreach (var box in boxes)
         {
@@ -52,12 +52,12 @@ partial class State
             }
             b = Block.CloneBlocks(b);
             w = (Worker)w.Clone();
-            foreach (var box in b)
+            for (int i = 0; i < b.Length; i++)
             {
-                if (box.x == checkBoxCol && box.y == checkBoxRow)
+                if (b[i].x == checkBoxCol && b[i].y == checkBoxRow)
                 {
-                    box.y = (byte)(w.y - direction.GetY());
-                    box.x = (byte)(w.x - direction.GetX());
+                    b[i].y = (byte)(w.y - direction.GetY());
+                    b[i].x = (byte)(w.x - direction.GetX());
                     break;
                 }
             }
@@ -226,15 +226,15 @@ class BidirectionalSearch : ISearcher<List<State>>
 
     private IEnumerable<State> GenerateFinalStates()
     {
-        Block[] boxes = new Block[Sokoban.baseState.boxes.Length];
+        (byte x, byte y)[] boxes = new (byte x, byte y)[Sokoban.baseState.boxes.Length];
 
         var nextBox = 0;
         foreach ((int col, int row) in Sokoban.map.FindBlocks(Block.Type.Mark))
         {
-            boxes[nextBox++] = new Block(col, row, Block.Type.Box);
+            boxes[nextBox++] = ((byte, byte))(col, row);
         }
 
-        foreach (Block b in boxes)
+        foreach (var b in boxes)
         {
             foreach (Worker.Direction direction in Worker.directions)
             {

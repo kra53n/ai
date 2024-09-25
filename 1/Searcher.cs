@@ -71,31 +71,17 @@ class Searcher : ISearcher<List<State>>
 
 partial class State
 {
-    public Block[] boxes;
+    public (byte x, byte y)[] boxes;
     public Worker worker;
     public State? prv;
     public int hash;
+    //public string str;
 
-    public State(Block[] _boxes, Worker _worker)
+    public State((byte x, byte y)[] _boxes, Worker _worker)
     {
         boxes = _boxes;
         worker = _worker;
 
-        //string str = "";
-        //var map = (Map)Sokoban.map.Clone();
-        //map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
-        //foreach (Block b in boxes)
-        //{
-        //    map.SetCell(b.y, b.x, (byte)Block.Type.Box);
-        //}
-        //for (int row = 0; row < map.GetRowsNum(); row++)
-        //{
-        //    for (int col = 0; col < map.GetColsNum(); col++)
-        //    {
-        //        str += (int)map.GetCell(row, col);
-        //    }
-        //}
-        //hash = str.GetHashCode();
         //foreach (Block b in boxes)
         //{
         //    str += b.x;
@@ -110,7 +96,7 @@ partial class State
 
         var map = (Map)Sokoban.map.Clone();
         map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
-        foreach (Block b in boxes)
+        foreach (var b in boxes)
         {
             map.SetCell(b.y, b.x, (byte)Block.Type.Box);
         }
@@ -118,9 +104,11 @@ partial class State
         {
             for (int col = 0; col < map.GetColsNum(); col++)
             {
+                //str += map.GetCell(row, col);
                 hash = (hash * 10781 + (int)map.GetCell(row, col));
             }
         }
+        //hash = str.GetHashCode();
     }
 
     public override int GetHashCode()
@@ -135,17 +123,10 @@ partial class State
             return false;
         }
         State state = (State)obj;
-        //foreach (var (b1, b2) in state.boxes.Zip(boxes))
-        //{
-        //    if (b1.x != b2.x || b1.y != b2.y)
-        //    {
-        //        return false;
-        //    }
-        //}
         foreach (var b1 in boxes)
         {
             if (!state.boxes.Contains(b1))
-            { 
+            {
                 return false;
             }
         }
@@ -154,6 +135,7 @@ partial class State
             return false;
         }
         return true;
+        //return (obj as State).str == str;
     }
 
     public bool IsGoal()
