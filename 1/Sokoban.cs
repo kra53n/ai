@@ -22,7 +22,7 @@ class Sokoban
     public static Mode mode = Mode.Game;
     public static Texture2D texture;
     public static Map? map;
-    public static List<Block>? boxes = null;
+    public static Block[]? boxes = null;
     public static Worker worker = new Worker(0, 0);
 
     public static State? baseState = null;
@@ -357,6 +357,8 @@ class Sokoban
     }
 }
 
+
+
 partial class Block
 {
     public enum Type : byte
@@ -372,16 +374,16 @@ partial class Block
 
     public byte x;
     public byte y;
-    public Type type;
+    public Block.Type type;
 
-    public Block(byte _x, byte _y, Type _type)
+    public Block(byte _x, byte _y, Block.Type _type)
     {
         x = _x;
         y = _y;
         type = _type;
     }    
     
-    public Block(int _x, int _y, Type _type)
+    public Block(int _x, int _y, Block.Type _type)
     {
         x = (byte)_x;
         y = (byte)_y;
@@ -395,12 +397,12 @@ partial class Block
         return o.x == x && o.y == y;
     }
 
-    public static List<Block> CloneBlocks(List<Block> old)
+    public static Block[] CloneBlocks(Block[] old)
     {
-        List<Block> blocks = new();
-        foreach (Block b in old)
+        Block[] blocks = new Block[Sokoban.baseState.boxes.Length];
+        for (int i = 0; i < Sokoban.baseState.boxes.Length; i++)
         {
-            blocks.Add((Block)b.MemberwiseClone());
+            blocks[i] = (Block)old[i].MemberwiseClone();
         }
         return blocks;
     }
@@ -421,7 +423,7 @@ partial class Map : ICloneable
     public void Load(byte[,] _map)
     {
         map = _map;
-        List<Block> boxes = new ();
+        List<Block> boxes = new();
         for (int row = 0; row < GetRowsNum(); row++)
         {
             for (int col = 0; col < GetColsNum(); col++)
@@ -448,8 +450,8 @@ partial class Map : ICloneable
                 }
             }
         }
-        Sokoban.boxes = boxes;
-        Sokoban.baseState = new State(new List<Block>(boxes), (Worker)Sokoban.worker.Clone());
+        Sokoban.boxes = boxes.ToArray();
+        Sokoban.baseState = new State((Block[])Sokoban.boxes.Clone(), (Worker)Sokoban.worker.Clone());
     }
 
     public IEnumerable<(int col, int row)> FindBlocks(Block.Type block)
@@ -466,7 +468,7 @@ partial class Map : ICloneable
         }
     }
 
-    public void Draw(List<Block> boxes)
+    public void Draw(Block[] boxes)
     {
         int _x = x;
         int _y = y;
@@ -528,7 +530,7 @@ partial class Map : ICloneable
         map[row, col] = val;
     }
 
-    public bool Complete(List<Block> boxes)
+    public bool Complete(Block[] boxes)
     {
         foreach (Block b in boxes)
         {
@@ -540,7 +542,7 @@ partial class Map : ICloneable
         return true;
     }
 
-    public bool Stepped(in Worker worker, List<Block> boxes)
+    public bool Stepped(in Worker worker, Block[] boxes)
     {
         foreach (Block b in boxes)
         {
@@ -552,7 +554,7 @@ partial class Map : ICloneable
         return map[worker.y, worker.x] == (byte)Block.Type.Wall;
     }
 
-    public bool CanMoveBox(in Worker worker, Worker.Direction dir, List<Block> boxes)
+    public bool CanMoveBox(in Worker worker, Worker.Direction dir, Block[] boxes)
     {
         if (
             worker.x == 0 || worker.y == 0 ||
@@ -578,7 +580,7 @@ partial class Map : ICloneable
         return cell != (byte)Block.Type.Wall;
     }
 
-    public void MoveBox(in Worker worker, Worker.Direction dir, List<Block> boxes)
+    public void MoveBox(in Worker worker, Worker.Direction dir, Block[] boxes)
     {
         int x = worker.x;
         int y = worker.y;
@@ -753,7 +755,7 @@ class Worker : ICloneable
         Raylib.DrawTexturePro(Sokoban.texture, new Rectangle(TEXTURE_POS * Sokoban.BLOCK_SIZE, 0, Sokoban.BLOCK_SIZE, Sokoban.BLOCK_SIZE), new(x, y, Sokoban.BLOCK_SIZE * Sokoban.SCALE, Sokoban.BLOCK_SIZE * Sokoban.SCALE), new(0, 0), 0, Color.White);
     }
 
-    public void Move(Direction direction, List<Block> boxes)
+    public void Move(Direction direction, Block[] boxes)
     {
         switch (direction)
         {
@@ -772,7 +774,7 @@ class Worker : ICloneable
         }
     }
 
-    public void Up(List<Block> boxes)
+    public void Up(Block[] boxes)
     {
         y -= 1;
         if (Sokoban.map.Stepped(this, boxes))
@@ -788,7 +790,7 @@ class Worker : ICloneable
         }
     }
 
-    public void Left(List<Block> boxes)
+    public void Left(Block[] boxes)
     {
         x -= 1;
         if (Sokoban.map.Stepped(this, boxes))
@@ -804,7 +806,7 @@ class Worker : ICloneable
         }
     }
 
-    public void Down(List<Block> boxes)
+    public void Down(Block[] boxes)
     {
         y += 1;
         if (Sokoban.map.Stepped(this, boxes))
@@ -820,7 +822,7 @@ class Worker : ICloneable
         }
     }
 
-    public void Right(List<Block> boxes)
+    public void Right(Block[] boxes)
     {
         x += 1;
         if (Sokoban.map.Stepped(this, boxes))

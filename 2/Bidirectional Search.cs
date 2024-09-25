@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 partial class Map
 {
-    public byte GetCell(int row, int col, List<Block> boxes)
+    public byte GetCell(int row, int col, Block[] boxes)
     {
         foreach (var box in boxes)
         {
@@ -218,11 +218,12 @@ class BidirectionalSearch : ISearcher<List<State>>
 
     private IEnumerable<State> GenerateFinalStates()
     {
-        List<Block> boxes = new();
+        Block[] boxes = new Block[Sokoban.baseState.boxes.Length];
 
+        var nextBox = 0;
         foreach ((int col, int row) in Sokoban.map.FindBlocks(Block.Type.Mark))
         {
-            boxes.Add(new Block(col, row, Block.Type.Box));
+            boxes[nextBox++] = new Block(col, row, Block.Type.Box);
         }
 
         foreach (Block b in boxes)
