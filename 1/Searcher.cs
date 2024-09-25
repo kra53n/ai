@@ -107,12 +107,7 @@ partial class State
         //str += worker.y;
         //hash = str.GetHashCode();
 
-        var map = (Map)Sokoban.map.Clone();
-        map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
-        foreach (Block b in boxes)
-        {
-            map.SetCell(b.y, b.x, (byte)Block.Type.Box);
-        }
+        (var tmp, map.map[worker.y, worker.x]) = (map.map[worker.y, worker.x], (byte)Sokoban.Block.Worker);
         for (int row = 0; row < map.GetRowsNum(); row++)
         {
             for (int col = 0; col < map.GetColsNum(); col++)
@@ -120,6 +115,7 @@ partial class State
                 hash = (hash * 1049 + (int)map.GetCell(row, col));
             }
         }
+        map.map[worker.y, worker.x] = tmp;
     }
 
     public override int GetHashCode()
