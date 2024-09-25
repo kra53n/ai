@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic;
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -95,6 +96,7 @@ partial class BidirectionalStatistic : Statistic
 
 class BidirectionalSearch : ISearcher<List<State>>
 {
+    private double printRate, lastFrame;
     private BidirectionalStatistic? statistic;
     private HashSet<State>? openNodes;
     private HashSet<State>? openNodesReversed;
@@ -105,10 +107,8 @@ class BidirectionalSearch : ISearcher<List<State>>
     {
         statistic = new();
 
-        openNodes = new();
-        openNodes.Add(new State(Sokoban.baseState.map, Sokoban.baseState.worker));
-        openNodesReversed = new();
-        GenerateFinalStates(Sokoban.baseState.map, Sokoban.baseState.worker).ForEach(i => openNodesReversed.Add(i));
+        openNodes = [new State(Sokoban.baseState.map, Sokoban.baseState.worker)];
+        openNodesReversed = [.. GenerateFinalStates(Sokoban.baseState.map, Sokoban.baseState.worker)];
         closedNodes = new();
         closedNodesReversed = new();
     }
@@ -173,6 +173,8 @@ class BidirectionalSearch : ISearcher<List<State>>
 
     public List<State>? Search()
     {
+        printRate = 1;
+        lastFrame = 0;
         while (true)
         {
             List<State>? result = null;
@@ -185,11 +187,16 @@ class BidirectionalSearch : ISearcher<List<State>>
                 result = ReversedIteration();
             }
 
-            Console.Clear();
-            Console.WriteLine($"On.count = {openNodes.Count()}");
-            Console.WriteLine($"Or.count = {openNodesReversed.Count()}");
-            Console.WriteLine($"Cn.count = {closedNodes.Count()}");
-            Console.WriteLine($"Cr.count = {closedNodesReversed.Count()}");
+            var newFrame = Raylib.GetTime();
+            if (newFrame - lastFrame >= printRate || result != null)
+            {
+                Console.Clear();
+                Console.WriteLine($"On.count = {openNodes.Count()}");
+                Console.WriteLine($"Or.count = {openNodesReversed.Count()}");
+                Console.WriteLine($"Cn.count = {closedNodes.Count()}");
+                Console.WriteLine($"Cr.count = {closedNodesReversed.Count()}");
+                lastFrame = newFrame;
+            }
 
 
             if (result != null)
@@ -201,10 +208,9 @@ class BidirectionalSearch : ISearcher<List<State>>
         
     }
 
-    private List<State> GenerateFinalStates(Map m, Worker worker)
+    private IEnumerable<State> GenerateFinalStates(Map m, Worker worker)
     {
         Map map = (Map)m.Clone();
-        var states = new List<State>();
         foreach ((int col, int row) in map.FindBlocks(Sokoban.Block.Box))
         {
             map.SetCell(row, col, (int)Sokoban.Block.Floor);
@@ -225,10 +231,9 @@ class BidirectionalSearch : ISearcher<List<State>>
                     Worker w = (Worker)worker.Clone();
                     w.x = checkFreeCol;
                     w.y = checkFreeRow;
-                    states.Add(new State((Map)map.Clone(), w));
+                    yield return new State((Map)map.Clone(), w);
                 }
             }
         }
-        return states;
     }
 }
