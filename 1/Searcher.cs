@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Runtime.InteropServices;
+using static Sokoban;
 
 interface ISearcher<T>
 {
@@ -79,29 +80,46 @@ partial class State
         map = _map;
         worker = _worker;
 
-        //var item = (int)Sokoban.Block.Worker;
-        //(item, map.map[worker.y, worker.x]) = (map.map[worker.y, worker.x], item);
-        //char[] str = new char[map.map.Length];
-        //Buffer.BlockCopy(map.map, 0, str, 0, map.map.Length);
-        //hash = new string(str).GetHashCode();
-        //map.map[worker.y, worker.x] = item;
+        //string str = "";
+        //var map = (Map)Sokoban.map.Clone();
+        //map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
+        //foreach (Block b in boxes)
+        //{
+        //    map.SetCell(b.y, b.x, (byte)Block.Type.Box);
+        //}
+        //for (int row = 0; row < map.GetRowsNum(); row++)
+        //{
+        //    for (int col = 0; col < map.GetColsNum(); col++)
+        //    {
+        //        str += (int)map.GetCell(row, col);
+        //    }
+        //}
+        //hash = str.GetHashCode();
+        //foreach (Block b in boxes)
+        //{
+        //    str += b.x;
+        //    str += "x";
+        //    str += b.y;
+        //    str += "x";
+        //}
+        //str += worker.x;
+        //str += "x";
+        //str += worker.y;
+        //hash = str.GetHashCode();
 
-        string str = "";
+        var map = (Map)Sokoban.map.Clone();
+        map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
+        foreach (Block b in boxes)
+        {
+            map.SetCell(b.y, b.x, (byte)Block.Type.Box);
+        }
         for (int row = 0; row < map.GetRowsNum(); row++)
         {
             for (int col = 0; col < map.GetColsNum(); col++)
             {
-                if (row == worker.y && col == worker.x)
-                {
-                    str += (int)Sokoban.Block.Worker;
-                }
-                else
-                {
-                    str += map.GetCell(row, col);
-                }
+                hash = (hash * 1049 + (int)map.GetCell(row, col));
             }
         }
-        hash = str.GetHashCode();
     }
 
     public override int GetHashCode()
