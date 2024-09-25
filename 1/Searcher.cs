@@ -69,12 +69,12 @@ class Searcher : ISearcher<List<State>>
 
 partial class State
 {
-    public List<Block> boxes;
+    public Block[] boxes;
     public Worker worker;
     public State? prv;
     public int hash;
 
-    public State(List<Block> _boxes, Worker _worker)
+    public State(Block[] _boxes, Worker _worker)
     {
         boxes = _boxes;
         worker = _worker;
