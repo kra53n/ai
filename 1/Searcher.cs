@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Runtime.InteropServices;
+using static Sokoban;
 
 interface ISearcher<T>
 {
@@ -79,20 +80,20 @@ partial class State
         boxes = _boxes;
         worker = _worker;
 
-        string str = "";
-        var map = (Map)Sokoban.map.Clone();
-        map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
-        foreach (Block b in boxes)
-        {
-            map.SetCell(b.y, b.x, (byte)Block.Type.Box);
-        }
-        for (int row = 0; row < map.GetRowsNum(); row++)
-        {
-            for (int col = 0; col < map.GetColsNum(); col++)
-            {
-                str += (int)map.GetCell(row, col);
-            }
-        }
+        //string str = "";
+        //var map = (Map)Sokoban.map.Clone();
+        //map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
+        //foreach (Block b in boxes)
+        //{
+        //    map.SetCell(b.y, b.x, (byte)Block.Type.Box);
+        //}
+        //for (int row = 0; row < map.GetRowsNum(); row++)
+        //{
+        //    for (int col = 0; col < map.GetColsNum(); col++)
+        //    {
+        //        str += (int)map.GetCell(row, col);
+        //    }
+        //}
         //hash = str.GetHashCode();
         //foreach (Block b in boxes)
         //{
@@ -104,7 +105,21 @@ partial class State
         //str += worker.x;
         //str += "x";
         //str += worker.y;
-        hash = str.GetHashCode();
+        //hash = str.GetHashCode();
+
+        var map = (Map)Sokoban.map.Clone();
+        map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
+        foreach (Block b in boxes)
+        {
+            map.SetCell(b.y, b.x, (byte)Block.Type.Box);
+        }
+        for (int row = 0; row < map.GetRowsNum(); row++)
+        {
+            for (int col = 0; col < map.GetColsNum(); col++)
+            {
+                hash = (hash * 1049 + (int)map.GetCell(row, col));
+            }
+        }
     }
 
     public override int GetHashCode()
