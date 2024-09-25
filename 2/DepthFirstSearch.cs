@@ -11,7 +11,7 @@ class DepthFirstSearch : ISearcher<List<State>>
         Stack<DepthFirstSearchState> closedNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> nxtOpenNodes = new Stack<DepthFirstSearchState>();
 
-        nxtOpenNodes.Push(new DepthFirstSearchState(Sokoban.baseState.map, Sokoban.baseState.worker, 0));
+        nxtOpenNodes.Push(new DepthFirstSearchState(Sokoban.baseState.boxes, Sokoban.baseState.worker, 0));
 
         for (int lvl = 0; ; lvl++)
         {
@@ -49,20 +49,22 @@ class DepthFirstSearchState : State
 {
     public int lvl;
 
-    public DepthFirstSearchState(Map _map, Worker _worker, int _lvl) : base(_map,  _worker)
+    public DepthFirstSearchState((byte x, byte y)[] boxes, Worker _worker, int _lvl) : base(boxes, _worker)
     {
         lvl = _lvl;
     }
 
-    public DepthFirstSearchState(State state, int _lvl) : base(state.map,  state.worker)
+    public DepthFirstSearchState(State state, int _lvl) : base(state.boxes, state.worker)
     {
         lvl = _lvl;
     }
 
-    public new List<DepthFirstSearchState> GetGeneratedStates()
+    public new IEnumerable<DepthFirstSearchState> GetGeneratedStates()
     {
-        List<State> states = base.GetGeneratedStates();
-        return states.Select(s => new DepthFirstSearchState(s, lvl + 1)).ToList();
+        foreach (State s in base.GetGeneratedStates())
+        {
+            yield return new DepthFirstSearchState(s, lvl + 1);
+        }
     }
 }
 

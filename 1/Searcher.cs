@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Runtime.InteropServices;
 using static Sokoban;
+using static System.Net.WebRequestMethods;
 
 interface ISearcher<T>
 {
@@ -43,7 +44,7 @@ class Searcher : ISearcher<List<State>>
 
         openNodes.Clear();
         closeNodes.Clear();
-        openNodes.Push(new State(Sokoban.baseState.map, Sokoban.baseState.worker));
+        openNodes.Push(new State(Sokoban.baseState.boxes, Sokoban.baseState.worker));
 
         while (!openNodes.Empty())
         {
@@ -70,14 +71,15 @@ class Searcher : ISearcher<List<State>>
 
 partial class State
 {
-    public Map map;
+    public (byte x, byte y)[] boxes;
     public Worker worker;
     public State? prv;
     public int hash;
+    //public string str;
 
-    public State(Map _map, Worker _worker)
+    public State((byte x, byte y)[] _boxes, Worker _worker)
     {
-        map = _map;
+        boxes = _boxes;
         worker = _worker;
 
         (var tmp, map.map[worker.y, worker.x]) = (map.map[worker.y, worker.x], (byte)Sokoban.Block.Worker);
@@ -85,7 +87,7 @@ partial class State
         {
             for (int col = 0; col < map.GetColsNum(); col++)
             {
-                hash = (hash * 1049 + (int)map.GetCell(row, col));
+                hash = (hash * 10781 + (int)map.GetCell(row, col));
             }
         }
         map.map[worker.y, worker.x] = tmp;
@@ -103,44 +105,37 @@ partial class State
             return false;
         }
         State state = (State)obj;
-        for (int row = 0; row < map.GetRowsNum(); row++)
+        foreach (var b1 in boxes)
         {
-            for (int col = 0; col < map.GetColsNum(); col++)
+            if (!state.boxes.Contains(b1))
             {
-                if (map.GetCell(row, col) != state.map.GetCell(row, col))
-                {
-                    return false;
-                }
+                return false;
             }
         }
         if (worker.x != state.worker.x || worker.y != state.worker.y)
-        { 
-            return false; 
+        {
+            return false;
         }
-        return true;
+        return true
     }
-
-    
 
     public bool IsGoal()
     {
-        return map.Complete();
+        return Sokoban.map.Complete(boxes);
     }
 
-    public List<State> GetGeneratedStates()
+    public IEnumerable<State> GetGeneratedStates()
     {
-        List<State> states = new List<State>();
         foreach (Worker.Direction direction in Worker.directions)
         {
-            Map m = (Map)map.Clone();
+            var b = Block.CloneBlocks(boxes);
             Worker w = (Worker)worker.Clone();
-            w.Move(m, direction);
+            w.Move(direction, b);
             if (w.x != worker.x || w.y != worker.y)
             {
-                states.Add(new State(m, w));
+                yield return new State(b, w);
             }
         }
-        return states;
     }
 
     public List<State> Unwrap()
