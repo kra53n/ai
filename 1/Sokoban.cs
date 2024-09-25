@@ -638,7 +638,6 @@ partial class Map : ICloneable
 
 class Box
 {
-    static Texture2D texture;
     static int TEXTURE_POS = 0;
 
     public static void Draw(int x, int y)
@@ -649,7 +648,6 @@ class Box
 
 class BoxOnMark
 {
-    static Texture2D texture;
     static int TEXTURE_POS = 1;
 
     public static void Draw(int x, int y)
