@@ -80,33 +80,6 @@ partial class State
         map = _map;
         worker = _worker;
 
-        //string str = "";
-        //var map = (Map)Sokoban.map.Clone();
-        //map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
-        //foreach (Block b in boxes)
-        //{
-        //    map.SetCell(b.y, b.x, (byte)Block.Type.Box);
-        //}
-        //for (int row = 0; row < map.GetRowsNum(); row++)
-        //{
-        //    for (int col = 0; col < map.GetColsNum(); col++)
-        //    {
-        //        str += (int)map.GetCell(row, col);
-        //    }
-        //}
-        //hash = str.GetHashCode();
-        //foreach (Block b in boxes)
-        //{
-        //    str += b.x;
-        //    str += "x";
-        //    str += b.y;
-        //    str += "x";
-        //}
-        //str += worker.x;
-        //str += "x";
-        //str += worker.y;
-        //hash = str.GetHashCode();
-
         (var tmp, map.map[worker.y, worker.x]) = (map.map[worker.y, worker.x], (byte)Sokoban.Block.Worker);
         for (int row = 0; row < map.GetRowsNum(); row++)
         {
