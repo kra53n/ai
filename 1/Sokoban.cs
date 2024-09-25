@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using static Worker;
 
 class Sokoban
@@ -149,6 +150,11 @@ class Sokoban
 
     public static void GameControlsProcessor()
     {
+        if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
+        {
+            return;
+        }
+
         if (Raylib.IsKeyPressed(KeyboardKey.W) || Raylib.IsKeyPressed(KeyboardKey.Up))
         {
             worker.Up(boxes);
@@ -218,6 +224,16 @@ class Sokoban
         }
     }
 
+    public static void LoadFromFolder(int index)
+    {
+        var files = Directory.GetFiles("../../../levels");
+        if (files.Length - 1 < index)
+        {
+            return;
+        }
+        LoadAndApplyMap(files[index]);
+    }
+
     public static void GlobalControlsProcessor()
     {
         if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
@@ -225,6 +241,14 @@ class Sokoban
             if (Raylib.IsKeyPressed(KeyboardKey.R))
             {
                 ToggleReplayGameMode();
+            }
+            for (int i = 0; i <= 9; i++)
+            {
+                if (Raylib.IsKeyPressed(KeyboardKey.One + i))
+                {
+                    LoadFromFolder(i);
+                    break;
+                }
             }
             return;
         }
@@ -253,8 +277,7 @@ class Sokoban
             var files = Raylib.GetDroppedFiles();
             if (files.Length == 1)
             {
-                map.Load(LoadMapContentFromFile(files[0]));
-                Rescale();
+                LoadAndApplyMap(files[0]);
                 if (mode == Mode.Replay)
                 {
                     ToggleReplayGameMode();
@@ -295,6 +318,12 @@ class Sokoban
             { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
             { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 }
         });
+        Rescale();
+    }
+
+    public static void LoadAndApplyMap(string file)
+    {
+        map.Load(LoadMapContentFromFile(file));
         Rescale();
     }
 
