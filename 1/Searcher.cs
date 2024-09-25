@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Runtime.InteropServices;
 using static Sokoban;
+using static System.Net.WebRequestMethods;
 
 interface ISearcher<T>
 {
@@ -117,7 +118,7 @@ partial class State
         {
             for (int col = 0; col < map.GetColsNum(); col++)
             {
-                hash = (hash * 1049 + (int)map.GetCell(row, col));
+                hash = (hash * 10781 + (int)map.GetCell(row, col));
             }
         }
     }

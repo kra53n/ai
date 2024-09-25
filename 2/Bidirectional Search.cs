@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic;
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -112,6 +113,7 @@ partial class BidirectionalStatistic : Statistic
 
 class BidirectionalSearch : ISearcher<List<State>>
 {
+    private double printRate, lastFrame;
     private BidirectionalStatistic? statistic;
     private HashSet<State>? openNodes;
     private HashSet<State>? openNodesReversed;
@@ -188,6 +190,8 @@ class BidirectionalSearch : ISearcher<List<State>>
 
     public List<State>? Search()
     {
+        printRate = 1;
+        lastFrame = 0;
         while (true)
         {
             List<State>? result = null;
@@ -200,12 +204,16 @@ class BidirectionalSearch : ISearcher<List<State>>
                 result = ReversedIteration();
             }
 
-            Console.Clear();
-            Console.WriteLine($"On.count = {openNodes.Count()}");
-            Console.WriteLine($"Or.count = {openNodesReversed.Count()}");
-            Console.WriteLine($"Cn.count = {closedNodes.Count()}");
-            Console.WriteLine($"Cr.count = {closedNodesReversed.Count()}");
-
+            var newFrame = Raylib.GetTime();
+            if (newFrame - lastFrame >= printRate || result != null)
+            {
+                Console.Clear();
+                Console.WriteLine($"On.count = {openNodes.Count()}");
+                Console.WriteLine($"Or.count = {openNodesReversed.Count()}");
+                Console.WriteLine($"Cn.count = {closedNodes.Count()}");
+                Console.WriteLine($"Cr.count = {closedNodesReversed.Count()}");
+                lastFrame = newFrame;
+            }
 
             if (result != null)
             {
