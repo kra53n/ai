@@ -40,9 +40,16 @@ class Sokoban
         Replay
     }
 
-    public static void Main()
+    public static void Main(string[] args)
     {
-        Init();
+        if (args.Length == 1)
+        {
+            Init(args[0]);
+        }
+        else
+        {
+            Init();
+        }
 
         Raylib.SetTargetFPS(60);
 
@@ -293,7 +300,7 @@ class Sokoban
         GlobalControlsProcessor();
     }
 
-    public static void Init()
+    public static void Init(string? file = null)
     {
         Raylib.InitWindow(WIDTH, HEIGHT, "СИИ 1 лаба - игра Сокобан");
 
@@ -306,19 +313,26 @@ class Sokoban
         Raylib.UnloadImage(assetImage);
 
         map = new Map(0, 0);
-        map.Load(new byte[,] {
-            { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
-            { 1, 0, 3, 1, 9, 9, 9, 9, 9, 9 },
-            { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
-            { 1, 4, 0, 0, 0, 1, 9, 9, 9, 9 },
-            { 1, 0, 0, 2, 5, 1, 9, 9, 9, 9 },
-            { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
-            { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
-            { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
-            { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
-            { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 }
-        });
-        Rescale();
+        try
+        {
+            LoadAndApplyMap(file);
+        } 
+        catch (Exception)
+        {
+            map.Load(new byte[,] {
+                { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
+                { 1, 0, 3, 1, 9, 9, 9, 9, 9, 9 },
+                { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
+                { 1, 4, 0, 0, 0, 1, 9, 9, 9, 9 },
+                { 1, 0, 0, 2, 5, 1, 9, 9, 9, 9 },
+                { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
+                { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
+                { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
+                { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
+                { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 }
+            });
+            Rescale();
+        }
     }
 
     public static void LoadAndApplyMap(string file)
