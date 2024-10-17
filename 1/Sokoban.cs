@@ -84,10 +84,6 @@ class Sokoban
 
     public static void ReplayControlsProcessor()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.Space))
-        {
-            Animator.PlayOrPause();
-        }
         if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
         {
             if (Raylib.IsKeyPressed(KeyboardKey.A) || Raylib.IsKeyPressed(KeyboardKey.Left))
@@ -140,6 +136,16 @@ class Sokoban
             {
                 Animator.Pause();
                 NextState();
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.R))
+            {
+                Animator.Pause();
+                SwitchToFirstState();
+                //worker = (Worker)baseState.worker.Clone();
+            }
+            if (Raylib.IsKeyPressed(KeyboardKey.Space))
+            {
+                Animator.PlayOrPause();
             }
         }
 
@@ -194,6 +200,15 @@ class Sokoban
         if (Raylib.IsKeyPressed(KeyboardKey.Four))
         {
             ProcessSearch("двунаправленный поиск", new BidirectionalSearch());
+        }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.R))
+        {
+            Animator.Pause();
+            //SwitchToFirstState();
+            baseState.boxes.CopyTo(boxes, 0);
+            worker = (Worker)baseState.worker.Clone();
+            return;
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
@@ -263,13 +278,6 @@ class Sokoban
         {
             mode = Mode.Edit;
             SCALE = 1;
-        }
-        if (Raylib.IsKeyPressed(KeyboardKey.R))
-        {
-            Animator.Pause();
-            SwitchToFirstState();
-            worker = (Worker)baseState.worker.Clone();
-            return;
         }
         if (Raylib.IsKeyPressed(KeyboardKey.F))
         {
@@ -415,30 +423,23 @@ partial class Block
         Empty = 9,
     };
 
-    public byte x;
-    public byte y;
+    public int x;
+    public int y;
     public Block.Type type;
-
-    public Block(byte _x, byte _y, Block.Type _type)
+    
+    public Block(int _x, int _y, Block.Type _type)
     {
         x = _x;
         y = _y;
         type = _type;
-    }    
-    
-    public Block(int _x, int _y, Block.Type _type)
-    {
-        x = (byte)_x;
-        y = (byte)_y;
-        type = _type;
     }
 
-    public override bool Equals(object? obj)
-    {
-        if (obj == null) return false;
-        var o = obj as Block;
-        return o.x == x && o.y == y;
-    }
+    //public override bool Equals(object? obj)
+    //{
+    //    if (obj == null) return false;
+    //    var o = obj as Block;
+    //    return o.x == x && o.y == y;
+    //}
 
     public static (byte x, byte y)[] CloneBlocks((byte x, byte y)[] old)
     {
