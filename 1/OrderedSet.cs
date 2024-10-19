@@ -6,14 +6,16 @@ using System.Text;
 using System.Threading.Tasks;
 
 // https://stackoverflow.com/questions/1552225/hashset-that-preserves-ordering
-public class OrderedSet<T> : ICollection<T>
+public class OrderedSet<T, K> : ICollection<T> where K : IComparable<K>
 {
     private readonly IDictionary<T, LinkedListNode<T>> m_Dictionary;
     private readonly LinkedList<T> m_LinkedList;
-
-    public OrderedSet()
+    private readonly Func<T, K> sortKey;
+    
+    public OrderedSet(Func<T, K> sortKey)
         : this(EqualityComparer<T>.Default)
     {
+        this.sortKey = sortKey;
     }
 
     public OrderedSet(IEqualityComparer<T> comparer)
@@ -34,8 +36,15 @@ public class OrderedSet<T> : ICollection<T>
     public bool Add(T item)
     {
         if (m_Dictionary.ContainsKey(item)) return false;
-        var node = m_LinkedList.AddLast(item);
-        m_Dictionary.Add(item, node);
+        for (LinkedListNode<T>? i = m_LinkedList.First; i != null; i = i.Next)
+        {
+            if (sortKey(item).CompareTo(sortKey(i.Value)) < 0)
+            {
+                m_Dictionary.Add(item, m_LinkedList.AddBefore(i, item));
+                return true;
+            }
+        }
+        m_Dictionary.Add(item, m_LinkedList.AddLast(item));
         return true;
     }
 
