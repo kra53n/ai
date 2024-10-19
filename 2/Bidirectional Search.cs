@@ -25,7 +25,7 @@ partial class Map
     }
 }
 
-partial class State
+public partial class State
 {
     public IEnumerable<State> GenerateReversedStates()
     {

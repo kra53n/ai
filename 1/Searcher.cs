@@ -69,7 +69,7 @@ class Searcher : ISearcher<List<State>>
     }
 }
 
-partial class State
+public partial class State
 {
     public (byte x, byte y)[] boxes;
     public Worker worker;
@@ -143,7 +143,7 @@ partial class State
         return Sokoban.map.Complete(boxes);
     }
 
-    public IEnumerable<State> GetGeneratedStates()
+    public virtual IEnumerable<State> GetGeneratedStates()
     {
         foreach (Worker.Direction direction in Worker.directions)
         {
