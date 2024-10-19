@@ -200,6 +200,10 @@ class Sokoban
         if (Raylib.IsKeyPressed(KeyboardKey.Four))
         {
             ProcessSearch("двунаправленный поиск", new BidirectionalSearch());
+        }        
+        if (Raylib.IsKeyPressed(KeyboardKey.Five))
+        {
+            ProcessSearch("Эвристика 1", new InformedSearch(InformedSearch.BestHeuristic));
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.R))
@@ -748,7 +752,7 @@ static class DirectionMethods
     }
 }
 
-class Worker : ICloneable
+public class Worker : ICloneable
 {
     static int TEXTURE_POS = 5;
     public int x;
