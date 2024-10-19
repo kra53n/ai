@@ -156,4 +156,17 @@ public class InformedSearch : ISearcher<List<State>>
     {
         return state.IsGoal() ? 1 : 0;
     }
+
+    static public int MidHeuristic(State state)
+    {
+        int counter = 0;
+        foreach ((byte x, byte y) b in state.boxes)
+        {
+            if (Sokoban.map.GetCell(b.y, b.x) != (byte)Block.Type.Mark)
+            {
+                counter++;
+            }
+        }
+        return counter;
+    }
 }
