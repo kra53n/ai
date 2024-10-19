@@ -200,10 +200,14 @@ class Sokoban
         if (Raylib.IsKeyPressed(KeyboardKey.Four))
         {
             ProcessSearch("двунаправленный поиск", new BidirectionalSearch());
-        }        
+        }
         if (Raylib.IsKeyPressed(KeyboardKey.Five))
         {
             ProcessSearch("Эвристика 1", new InformedSearch(InformedSearch.BestHeuristic));
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.Six))
+        {
+            ProcessSearch("Эвристика Mid", new InformedSearch(InformedSearch.MidHeuristic));
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.R))
