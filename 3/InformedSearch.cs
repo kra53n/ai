@@ -99,15 +99,15 @@ public class InformedSearch : ISearcher<List<State>>
         while (openNodes.Count > 0)
         {
             var curr = openNodes.Pop();
+            if (curr.IsGoal())
+            {
+                statistic.Print();
+                return curr.Unwrap();
+            }
             statistic.Collect(openNodes, closedNodes);
             closedNodes.Add(curr);
             foreach (InformedState state in curr.GetGeneratedStates())
             {
-                if (state.IsGoal())
-                {
-                    statistic.Print();
-                    return state.Unwrap();
-                }
                 var item = openNodes.GetItem(state);
                 if (item != null)
                 {
