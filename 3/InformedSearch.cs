@@ -38,7 +38,6 @@ public class InformedState : State
     {
         foreach (var state in base.GetGeneratedStates())
         {
-            state.prv = this;
             yield return new InformedState(state);
         }
     }
@@ -136,6 +135,7 @@ public class InformedSearch : ISearcher<List<State>>
                 }
                 state.g = curr.g + 1;
                 state.f = h(state) + state.g;
+                state.prv = curr;
                 openNodes.Add(state);
 
 
