@@ -274,13 +274,13 @@ class Editor
         {
             if (block.x == p.X && block.y == p.Y)
             {
-                block.type = (Block.Type)currBlock;
+                block.type = currBlock == null ? Block.Type.Empty : (Block.Type)currBlock;
                 return;
             }
         }
         if (currBlock != null)
         {
-            blocks.Add(new Block((int)p.X, (int)p.Y, (Block.Type)currBlock));
+            blocks.Add(new Block((int)p.X, (int)p.Y, Block.Type.Empty));
         }
     }
 }
