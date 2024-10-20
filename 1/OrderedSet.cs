@@ -40,7 +40,7 @@ public class OrderedSet<T, K> : ICollection<T> where K : IComparable<K>
         var skItem = sortKey(item);
         for (LinkedListNode<T>? i = m_LinkedList.First; i != null; i = i.Next)
         {
-            if (skItem.CompareTo(sortKey(i.Value)) <= 0)
+            if (skItem.CompareTo(sortKey(i.Value)) < 0)
             {
                 m_Dictionary.Add(item, m_LinkedList.AddBefore(i, item));
                 return true;

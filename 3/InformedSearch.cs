@@ -77,7 +77,7 @@ public class InformedSearch : ISearcher<List<State>>
     private double printRate, lastFrame;
     private InformedStatistic? statistic;
     private OrderedSet<InformedState, int>? openNodes;
-    private OrderedSet<InformedState, int>? closedNodes;
+    private HashSet<InformedState>? closedNodes;
     private Func<State, int> h;
 
     public InformedSearch(Func<State, int> heuristicFunc)
@@ -89,7 +89,7 @@ public class InformedSearch : ISearcher<List<State>>
         {
             new InformedState(startState, h(startState), 0)
         };
-        closedNodes = new(state => state.f);
+        closedNodes = new();
     }
 
     public List<State>? Search()
@@ -120,7 +120,7 @@ public class InformedSearch : ISearcher<List<State>>
                     }
                     continue;
                 }
-                item = closedNodes.GetItem(state);
+                closedNodes.TryGetValue(state, out item);
                 if (item != null)
                 {
                     var score = h(state) + curr.g + 1;
