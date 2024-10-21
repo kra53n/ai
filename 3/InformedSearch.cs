@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
 public class InformedState : State
 {
     public int f = 0, g = 0;
@@ -45,6 +44,13 @@ public class InformedState : State
 
 partial class InformedStatistic : Statistic
 {
+    public string name;
+
+    public InformedStatistic(string _name)
+    {
+        name = _name;
+    }
+
     public void Collect<T>(ICollection<T> openNodes, ICollection<T> closeNodes)
     {
         iters++;
@@ -57,7 +63,7 @@ partial class InformedStatistic : Statistic
 
     public void Print()
     {
-        string s = "\n\tРезультат эвристического поиска:\n\n";
+        string s = $"\n\tРезультат {name} эвристического поиска:\n\n";
         s += $"Итераций: {iters}\n";
         s += $"Открытые узлы:\n";
         s += $"\tКоличество при завершении: {currOpenNodesNum}\n";
@@ -79,9 +85,9 @@ public class InformedSearch : ISearcher<List<State>>
     private HashSet<InformedState>? closedNodes;
     private Func<State, int> h;
 
-    public InformedSearch(Func<State, int> heuristicFunc)
+    public InformedSearch(Func<State, int> heuristicFunc, string name)
     {
-        statistic = new();
+        statistic = new(name);
         h = heuristicFunc;
         State startState = new(Sokoban.baseState.boxes, Sokoban.baseState.worker);
         openNodes = new(state => state.f)
@@ -142,9 +148,9 @@ public class InformedSearch : ISearcher<List<State>>
                 var newFrame = Raylib.GetTime();
                 if (newFrame - lastFrame >= printRate)
                 {
-                    Console.Clear();
-                    Console.WriteLine($"On.count = {openNodes.Count()}");
-                    Console.WriteLine($"Cn.count = {closedNodes.Count()}");
+                    //Console.Clear();
+                    //Console.WriteLine($"On.count = {openNodes.Count()}");
+                    //Console.WriteLine($"Cn.count = {closedNodes.Count()}");
                     lastFrame = newFrame;
                 }
             }
@@ -168,5 +174,23 @@ public class InformedSearch : ISearcher<List<State>>
             }
         }
         return counter;
+    }
+
+    static public int WorstHeuristic(State state)
+    {
+        if (Sokoban.map.marks == null)
+        {
+            return BestHeuristic(state);
+        }
+        int res = 0;
+        (byte x, byte y)[] marks = Sokoban.map.marks;
+        foreach ((byte x, byte y) b in state.boxes)
+        {
+            foreach ((byte x, byte y) m in marks)
+            {
+                res += Sphere.Dist((m.x, m.y), (b.x, b.y));
+            }
+        }
+        return res;
     }
 }

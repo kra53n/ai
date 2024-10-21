@@ -185,29 +185,33 @@ class Sokoban
             worker.Right(boxes);
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.One))
+        if (Raylib.IsKeyPressed(KeyboardKey.Zero + 1))
         {
             ProcessSearch("поиск в ширину", new Searcher(Searcher.Type.Breadth));
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.Two))
+        if (Raylib.IsKeyPressed(KeyboardKey.Zero + 2))
         {
             ProcessSearch("поиск в глубину", new Searcher(Searcher.Type.Depth));
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.Three))
+        if (Raylib.IsKeyPressed(KeyboardKey.Zero + 3))
         {
             ProcessSearch("поиск в глубину с итеративным углеблением", new DepthFirstSearch());
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.Four))
+        if (Raylib.IsKeyPressed(KeyboardKey.Zero + 4))
         {
             ProcessSearch("двунаправленный поиск", new BidirectionalSearch());
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.Five))
+        if (Raylib.IsKeyPressed(KeyboardKey.Zero + 5))
         {
-            ProcessSearch("Эвристика 1", new InformedSearch(InformedSearch.BestHeuristic));
+            ProcessSearch("Эвристика 1", new InformedSearch(InformedSearch.BestHeuristic, "лучшего"));
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.Six))
+        if (Raylib.IsKeyPressed(KeyboardKey.Zero + 6))
         {
-            ProcessSearch("Эвристика Mid", new InformedSearch(InformedSearch.MidHeuristic));
+            ProcessSearch("Эвристика Mid", new InformedSearch(InformedSearch.MidHeuristic, "среднего"));
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.Zero + 7))
+        {
+            ProcessSearch("Эвристика Worst", new InformedSearch(InformedSearch.WorstHeuristic, "худшего"));
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.R))
@@ -466,6 +470,7 @@ partial class Map : ICloneable
     public byte[,]? map;
     public int x;
     public int y;
+    public (byte x, byte y)[]? marks;
     
     public Map(int _x, int _y)
     {
@@ -475,6 +480,7 @@ partial class Map : ICloneable
     public void Load(byte[,] _map)
     {
         map = _map;
+        List<(byte x, byte y)> _marks = new();
         List<(byte x, byte y)> boxes = new();
         for (int row = 0; row < GetRowsNum(); row++)
         {
@@ -493,16 +499,21 @@ partial class Map : ICloneable
                     if (cell == (byte)Block.Type.BoxOnMark)
                     {
                         map[row, col] = (byte)Block.Type.Mark;
+                        _marks.Add(((byte)col, (byte)row));
                     }
                     else if (cell == (byte)Block.Type.Box)
                     {
                         map[row, col] = (byte)Block.Type.Floor;
                     }
                     break;
+                    case (byte)Block.Type.Mark:
+                        _marks.Add(((byte)col, (byte)row));
+                        break;
                 }
             }
         }
-        Sokoban.boxes = boxes.ToArray();
+        marks = _marks.ToArray();
+        Sokoban.boxes = boxes.ToArray(); // TODO(kra53n): maybe do as marks
         Sokoban.baseState = new State(((byte x, byte y)[])Sokoban.boxes.Clone(), (Worker)Sokoban.worker.Clone());
     }
 

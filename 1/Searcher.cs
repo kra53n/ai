@@ -75,24 +75,11 @@ public partial class State
     public Worker worker;
     public State? prv;
     public int hash;
-    //public string str;
 
     public State((byte x, byte y)[] _boxes, Worker _worker)
     {
         boxes = _boxes;
         worker = _worker;
-
-        //foreach (Block b in boxes)
-        //{
-        //    str += b.x;
-        //    str += "x";
-        //    str += b.y;
-        //    str += "x";
-        //}
-        //str += worker.x;
-        //str += "x";
-        //str += worker.y;
-        //hash = str.GetHashCode();
 
         var map = (Map)Sokoban.map.Clone();
         map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
@@ -104,11 +91,9 @@ public partial class State
         {
             for (int col = 0; col < map.GetColsNum(); col++)
             {
-                //str += map.GetCell(row, col);
                 hash = (hash * 10781 + (int)map.GetCell(row, col));
             }
         }
-        //hash = str.GetHashCode();
     }
 
     public override int GetHashCode()
