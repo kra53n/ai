@@ -280,6 +280,10 @@ class Sokoban
             {
                 if (Raylib.IsKeyPressed(KeyboardKey.One + i))
                 {
+                    if (mode == Mode.Replay)
+                    {
+                        ToggleReplayGameMode();
+                    }
                     LoadFromFolder(i);
                     break;
                 }
