@@ -97,6 +97,7 @@ partial class BidirectionalStatistic : Statistic
     {
         string s = "\n\tРезультаты двунаправленного поиска";
         s += "\n\n";
+        s += $"Длина пути: {pathLenght}\n";
         s += $"Итераций: {iters}\n";
         s += $"Открытые узлы:\n";
         s += $"\tКоличество при завершении: {currOpenNodesNum + currOpenNodesNumR}\n";
@@ -142,9 +143,10 @@ class BidirectionalSearch : ISearcher<List<State>>
                 openNodesReversed.TryGetValue(s, out var item);
                 if (item != null)
                 {
-                    List<State> l = item.Unwrap();
+                    List<State> l = item.Unwrap(out statistic.pathLenght);
                     l.Reverse();
-                    var res = state.Unwrap();
+                    var res = state.Unwrap(out int secondPathLen);
+                    statistic.pathLenght += secondPathLen - 1;
                     res.AddRange(l);
                     return res;
                 }
@@ -171,9 +173,10 @@ class BidirectionalSearch : ISearcher<List<State>>
                 openNodes.TryGetValue(s, out var item);
                 if (item != null)
                 {
-                    List<State> l = state.Unwrap();
+                    List<State> l = state.Unwrap(out statistic.pathLenght);
                     l.Reverse();
-                    var res = item.Unwrap();
+                    var res = item.Unwrap(out int secondPathLen);
+                    statistic.pathLenght += secondPathLen - 1;
                     res.AddRange(l);
                     return res;
                 }
