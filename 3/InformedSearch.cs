@@ -64,6 +64,7 @@ partial class InformedStatistic : Statistic
     public void Print()
     {
         string s = $"\n\tРезультат {name} эвристического поиска:\n\n";
+        s += $"Длина пути: {pathLenght}\n";
         s += $"Итераций: {iters}\n";
         s += $"Открытые узлы:\n";
         s += $"\tКоличество при завершении: {currOpenNodesNum}\n";
@@ -106,6 +107,7 @@ public class InformedSearch : ISearcher<List<State>>
             var curr = openNodes.Pop();
             if (curr.IsGoal())
             {
+                statistic.pathLenght = curr.g;
                 statistic.Print();
                 return curr.Unwrap();
             }
@@ -145,14 +147,14 @@ public class InformedSearch : ISearcher<List<State>>
                 openNodes.Add(state);
 
 
-                var newFrame = Raylib.GetTime();
-                if (newFrame - lastFrame >= printRate)
-                {
-                    //Console.Clear();
-                    //Console.WriteLine($"On.count = {openNodes.Count()}");
-                    //Console.WriteLine($"Cn.count = {closedNodes.Count()}");
-                    lastFrame = newFrame;
-                }
+                //var newFrame = Raylib.GetTime();
+                //if (newFrame - lastFrame >= printRate)
+                //{
+                //    Console.Clear();
+                //    Console.WriteLine($"On.count = {openNodes.Count()}");
+                //    Console.WriteLine($"Cn.count = {closedNodes.Count()}");
+                //    lastFrame = newFrame;
+                //}
             }
         }
         return null;

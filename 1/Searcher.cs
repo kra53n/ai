@@ -163,6 +163,7 @@ partial class Statistic
     protected int currClosedNodesNum = 0;
     protected int maxClosedNodesNum = 0;
     protected int maxNodesNum = 0;
+    public int pathLenght = 0;
 
     public void Collect(ISequence<State> openNodes, ISequence<State> closeNodes)
     {
