@@ -14,6 +14,7 @@
     <Compile Include="..\2\Bidirectional Search.cs" Link="Bidirectional Search.cs" />
     <Compile Include="..\2\DepthFirstSearch.cs" Link="DepthFirstSearch.cs" />
     <Compile Include="..\3\InformedSearch.cs" Link="InformedSearch.cs" />
+    <Compile Include="..\3\SphereDist.cs" Link="SphereDist.cs" />
   </ItemGroup>
 
   <ItemGroup>
