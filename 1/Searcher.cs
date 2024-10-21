@@ -144,11 +144,18 @@ public partial class State
 
     public List<State> Unwrap()
     {
+        return Unwrap(out _);
+    }
+
+    public List<State> Unwrap(out int pathLen)
+    {
         List<State> states = new List<State>();
         State? s = this;
+        pathLen = 0;
         while (s != null)
         {
             states.Insert(0, s);
+            pathLen++;
             s = s.prv;
         }
         return states;
