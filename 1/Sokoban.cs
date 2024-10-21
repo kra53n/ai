@@ -695,6 +695,7 @@ partial class Map : ICloneable
         }
         Map m = new Map(x, y);
         m.map = (byte[,])map.Clone();
+        m.marks = ((byte, byte)[])marks.ToArray().Clone();
         return m;
     }
 }
