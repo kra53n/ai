@@ -203,13 +203,17 @@ class Sokoban
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Zero + 5))
         {
-            ProcessSearch("Эвристика 1", new InformedSearch(InformedSearch.BestHeuristic, "лучшего"));
+            ProcessSearch("Эвристика Best", new InformedSearch(InformedSearch.BestHeuristic, "лучшего"));
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Zero + 6))
         {
-            ProcessSearch("Эвристика Mid", new InformedSearch(InformedSearch.MidHeuristic, "среднего"));
+            ProcessSearch("Эвристика Better", new InformedSearch(InformedSearch.OkHeuristic, "получше"));
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Zero + 7))
+        {
+            ProcessSearch("Эвристика Mid", new InformedSearch(InformedSearch.MidHeuristic, "среднего"));
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.Zero + 8))
         {
             ProcessSearch("Эвристика Worst", new InformedSearch(InformedSearch.WorstHeuristic, "худшего"));
         }

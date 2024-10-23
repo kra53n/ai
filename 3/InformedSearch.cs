@@ -162,7 +162,42 @@ public class InformedSearch : ISearcher<List<State>>
 
     static public int BestHeuristic(State state)
     {
-        return state.IsGoal() ? 1 : 0;
+        (byte x, byte y) nearestBox = (0, 0);
+        int min = int.MaxValue;
+        foreach ((byte x, byte y) b in state.boxes)
+        {
+            int dist = Sphere.Dist(((byte)state.worker.x, (byte)state.worker.y), (b.x, b.y));
+            if (min > dist)
+            {
+                min = dist;
+                nearestBox = b;
+            }
+        }
+
+        (byte x, byte y)[] marks = Sokoban.map.marks;
+        min = int.MaxValue;
+        foreach ((byte x, byte y) m in marks)
+        {
+            int dist = Sphere.Dist((nearestBox.x, nearestBox.y), (m.x, m.y));
+            min = Math.Min(min, dist);
+        }
+        return min;
+    }
+
+    static public int BetterHeuristic(State state)
+    {
+        int res = 0;
+        (byte x, byte y)[] marks = Sokoban.map.marks;
+        foreach ((byte x, byte y) b in state.boxes)
+        {
+            List<int> dists = new();
+            foreach ((byte x, byte y) m in marks)
+            {
+                dists.Add(Sphere.Dist((m.y, m.y), (b.x, b.y)));
+            }
+            res += dists.Min();
+        }
+        return res;
     }
 
     static public int MidHeuristic(State state)
@@ -195,4 +230,5 @@ public class InformedSearch : ISearcher<List<State>>
         }
         return res;
     }
+
 }
