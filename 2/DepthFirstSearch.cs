@@ -31,7 +31,7 @@ class DepthFirstSearch : ISearcher<List<State>>
                     statistic.Print();
                     return state.Unwrap();
                 }
-                closedNodes.Push(state);
+                closedNodes.Push(state);    
                 foreach (DepthFirstSearchState s in state.GetGeneratedStates())
                 {
                     if (!openNodes.Contains(s) && !nxtOpenNodes.Contains(s) && !closedNodes.Contains(s))

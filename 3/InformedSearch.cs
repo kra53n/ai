@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -163,9 +164,27 @@ public class InformedSearch : ISearcher<List<State>>
     static public int BestHeuristic(State state)
     {
         (byte x, byte y) nearestBox = (0, 0);
+        (byte x, byte y)[] marks = Sokoban.map.marks;
+        var boxOnMarks = Enumerable.Repeat(false, marks.Length).ToArray();
         int min = int.MaxValue;
-        foreach ((byte x, byte y) b in state.boxes)
+        for (int i = 0; i < state.boxes.Length; i++)
         {
+			var b = state.boxes[i];
+            bool skip = false;
+            for (int j = 0; j < marks.Length; j++)
+            {
+				var m = marks[j];
+                if (boxOnMarks[j] || b.x == m.x && b.y == m.y)
+                {
+                    skip = true;
+					boxOnMarks[j] = true;
+                    break;
+                }
+            }
+            if (skip)
+            {
+                continue;
+            }
             int dist = Sphere.Dist(((byte)state.worker.x, (byte)state.worker.y), (b.x, b.y));
             if (min > dist)
             {
@@ -174,10 +193,18 @@ public class InformedSearch : ISearcher<List<State>>
             }
         }
 
-        (byte x, byte y)[] marks = Sokoban.map.marks;
-        min = int.MaxValue;
-        foreach ((byte x, byte y) m in marks)
+        if (boxOnMarks.Count(x => x == true) == marks.Length)
         {
+            return 0;
+        }
+        min = int.MaxValue;
+        for (int i = 0; i < marks.Length; i++)
+        {
+			if (boxOnMarks[i])
+			{
+				continue;
+			}
+			var m = marks[i];
             int dist = Sphere.Dist((nearestBox.x, nearestBox.y), (m.x, m.y));
             min = Math.Min(min, dist);
         }

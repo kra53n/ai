@@ -207,7 +207,7 @@ class Sokoban
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Zero + 6))
         {
-            ProcessSearch("Эвристика Better", new InformedSearch(InformedSearch.OkHeuristic, "получше"));
+            ProcessSearch("Эвристика Better", new InformedSearch(InformedSearch.BetterHeuristic, "получше"));
         }
         if (Raylib.IsKeyPressed(KeyboardKey.Zero + 7))
         {
