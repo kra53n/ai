@@ -217,6 +217,10 @@ class Sokoban
         {
             ProcessSearch("Эвристика Worst", new InformedSearch(InformedSearch.WorstHeuristic, "худшего"));
         }
+        if (Raylib.IsKeyPressed(KeyboardKey.Zero + 9))
+        {
+            ProcessSearch("Эвристика Horrible", new InformedSearch(InformedSearch.HorribleHeuristic, "ужасного"));
+        }
 
         if (Raylib.IsKeyPressed(KeyboardKey.R))
         {
