@@ -83,7 +83,7 @@ public class InformedSearch : ISearcher<List<State>>
 {
     private double printRate, lastFrame;
     private InformedStatistic? statistic;
-    private OrderedSet<InformedState, int>? openNodes;
+    private OrderedSet<InformedState>? openNodes;
     private HashSet<InformedState>? closedNodes;
     private Func<State, int> h;
 

@@ -7,13 +7,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 // https://stackoverflow.com/questions/1552225/hashset-that-preserves-ordering
-public class OrderedSet<T, K> : ICollection<T> where K : IComparable<K>
+public class OrderedSet<T> : ICollection<T>
 {
     private readonly IDictionary<T, LinkedListNode<T>> m_Dictionary;
     private readonly LinkedList<T> m_LinkedList;
-    private readonly Func<T, K> sortKey;
+    private readonly Func<T, IComparable> sortKey;
     
-    public OrderedSet(Func<T, K> sortKey)
+    public OrderedSet(Func<T, IComparable> sortKey)
         : this(EqualityComparer<T>.Default)
     {
         this.sortKey = sortKey;
