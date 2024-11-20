@@ -3,7 +3,7 @@ using System.Data;
 class DepthFirstSearch : ISearcher<List<State>>
 {
     // TODO(kra53n): delete *.Clear() in other Search's
-    public List<State>? Search()
+    public List<State>? Search(State begState)
     {
         DepthFirstSearchStatistic statistic = new DepthFirstSearchStatistic();
 
@@ -11,7 +11,7 @@ class DepthFirstSearch : ISearcher<List<State>>
         Stack<DepthFirstSearchState> closedNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> nxtOpenNodes = new Stack<DepthFirstSearchState>();
 
-        nxtOpenNodes.Push(new DepthFirstSearchState(Sokoban.baseState.boxes, Sokoban.baseState.worker, 0));
+        nxtOpenNodes.Push(new DepthFirstSearchState(begState.boxes, begState.worker, 0));
 
         for (int lvl = 0; ; lvl++)
         {

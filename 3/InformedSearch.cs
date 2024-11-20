@@ -91,18 +91,20 @@ public class InformedSearch : ISearcher<List<State>>
     {
         statistic = new(name);
         h = heuristicFunc;
+    }
+
+    public List<State>? Search(State begState)
+    {
+        printRate = 1;
+        lastFrame = 0;
+
         State startState = new(Sokoban.baseState.boxes, Sokoban.baseState.worker);
         openNodes = new(state => state.f)
         {
             new InformedState(startState, h(startState), 0)
         };
         closedNodes = new();
-    }
 
-    public List<State>? Search()
-    {
-        printRate = 1;
-        lastFrame = 0;
         while (openNodes.Count > 0)
         {
             var curr = openNodes.Pop();

@@ -124,11 +124,6 @@ class BidirectionalSearch : ISearcher<List<State>>
     public BidirectionalSearch()
     {
         statistic = new();
-
-        openNodes = [new State(Sokoban.baseState.boxes, Sokoban.baseState.worker)];
-        openNodesReversed = [.. GenerateFinalStates()];
-        closedNodes = new();
-        closedNodesReversed = new();
     }
 
     private List<State>? NormalIteration()
@@ -191,10 +186,16 @@ class BidirectionalSearch : ISearcher<List<State>>
         return null;
     }
 
-    public List<State>? Search()
+    public List<State>? Search(State begState)
     {
         printRate = 1;
         lastFrame = 0;
+
+        openNodes = [new State(Sokoban.baseState.boxes, Sokoban.baseState.worker)];
+        openNodesReversed = [.. GenerateFinalStates()];
+        closedNodes = new();
+        closedNodesReversed = new();
+
         while (true)
         {
             List<State>? result = null;

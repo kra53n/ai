@@ -5,7 +5,7 @@ using static System.Net.WebRequestMethods;
 
 interface ISearcher<T>
 {
-    public T? Search();
+    public T? Search(State begState);
 }
 
 class Searcher : ISearcher<List<State>>
@@ -38,13 +38,13 @@ class Searcher : ISearcher<List<State>>
         type = _type;
     }
 
-    public List<State>? Search()
+    public List<State>? Search(State begState)
     {
         Statistic statistic = new Statistic();
 
         openNodes.Clear();
         closeNodes.Clear();
-        openNodes.Push(new State(Sokoban.baseState.boxes, Sokoban.baseState.worker));
+        openNodes.Push(begState);
 
         while (!openNodes.Empty())
         {

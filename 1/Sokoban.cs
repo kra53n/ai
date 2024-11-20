@@ -157,7 +157,7 @@ class Sokoban
         Sokoban.searchMethod = searchMethod;
         Raylib.SetWindowTitle($"Осуществляется {searchMethod}");
         currStateIdx = 0;
-        states = searcher.Search();
+        states = searcher.Search(new State(Sokoban.baseState.boxes, Sokoban.baseState.worker));
         Raylib.SetWindowTitle($"{char.ToUpper(searchMethod[0]) + searchMethod.Substring(1)} завершён");
     }
 
