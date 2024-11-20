@@ -123,7 +123,6 @@ class BidirectionalSearch : ISearcher<List<State>>
 
     public BidirectionalSearch()
     {
-        statistic = new();
     }
 
     private List<State>? NormalIteration()
@@ -190,6 +189,8 @@ class BidirectionalSearch : ISearcher<List<State>>
     {
         printRate = 1;
         lastFrame = 0;
+
+        statistic = new();
 
         openNodes = [new State(Sokoban.baseState.boxes, Sokoban.baseState.worker)];
         openNodesReversed = [.. GenerateFinalStates()];

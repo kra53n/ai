@@ -75,6 +75,7 @@ public partial class State
     public Worker worker;
     public State? prv;
     public int hash;
+	public Map map = Sokoban.map;
 
     public State((byte x, byte y)[] _boxes, Worker _worker)
     {
@@ -125,7 +126,7 @@ public partial class State
 
     public bool IsGoal()
     {
-        return Sokoban.map.Complete(boxes);
+        return map.Complete(boxes);
     }
 
     public virtual IEnumerable<State> GetGeneratedStates()

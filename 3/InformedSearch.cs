@@ -1,4 +1,5 @@
-﻿using Raylib_cs;
+﻿using Microsoft.VisualBasic;
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,6 +78,16 @@ partial class InformedStatistic : Statistic
         s += "\n";
         Console.WriteLine(s);
     }
+
+    public void nil()
+    {
+        iters = 0;
+        currOpenNodesNum = 0;
+        currClosedNodesNum = 0;
+        maxOpenNodesNum = 0;
+        maxClosedNodesNum = 0;
+        maxNodesNum = 0;
+    }
 }
 
 public class InformedSearch : ISearcher<List<State>>
@@ -97,6 +108,8 @@ public class InformedSearch : ISearcher<List<State>>
     {
         printRate = 1;
         lastFrame = 0;
+
+        statistic.nil()
 
         State startState = new(Sokoban.baseState.boxes, Sokoban.baseState.worker);
         openNodes = new(state => state.f)
