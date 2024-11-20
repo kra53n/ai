@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-class Measure
+class Measures
 {
 	public static void Do()
 	{
@@ -30,13 +30,13 @@ class Measure
 				foreach (var search in searches)
 				{
 					var filename = $"{search.name}_{depth}_{boxes}.txt";
-					measure(search.s, begState, filename, depth);
+					Measure(search.s, begState, filename, depth);
 				}
 			}
 		}
 	}
 
-	public static void measure(ISearcher<List<State>> search, State begState, string filename, int depth)
+	private static void Measure(ISearcher<List<State>> search, State begState, string filename, int depth)
 	{
 	}
 
