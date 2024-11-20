@@ -359,13 +359,20 @@ class Sokoban
                 { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
                 { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 }
             });
-            Rescale();
+            ApplyMap();
         }
     }
 
     public static void LoadAndApplyMap(string file)
     {
         map.Load(LoadMapContentFromFile(file));
+        ApplyMap();
+    }
+
+    public static void ApplyMap()
+    {
+        Sokoban.boxes = map.boxes;
+        Sokoban.baseState = new State(((byte x, byte y)[])Sokoban.boxes.Clone(), (Worker)Sokoban.worker.Clone());
         Rescale();
     }
 
@@ -474,11 +481,11 @@ partial class Block
 
 partial class Map : ICloneable
 {
-    // TODO(kra53n): look at memory usage if we will use Block.Type instead of byte
     public byte[,]? map;
     public int x;
     public int y;
     public (byte x, byte y)[]? marks;
+    public (byte x, byte y)[]? boxes;
     
     public Map(int _x, int _y)
     {
@@ -489,7 +496,7 @@ partial class Map : ICloneable
     {
         map = _map;
         List<(byte x, byte y)> _marks = new();
-        List<(byte x, byte y)> boxes = new();
+        List<(byte x, byte y)> _boxes = new();
         for (int row = 0; row < GetRowsNum(); row++)
         {
             for (int col = 0; col < GetColsNum(); col++)
@@ -503,7 +510,7 @@ partial class Map : ICloneable
                     break;
                 case (byte)Block.Type.Box:
                 case (byte)Block.Type.BoxOnMark:
-                    boxes.Add(((byte x, byte y))(col, row));
+                    _boxes.Add(((byte x, byte y))(col, row));
                     if (cell == (byte)Block.Type.BoxOnMark)
                     {
                         map[row, col] = (byte)Block.Type.Mark;
@@ -521,8 +528,7 @@ partial class Map : ICloneable
             }
         }
         marks = _marks.ToArray();
-        Sokoban.boxes = boxes.ToArray(); // TODO(kra53n): maybe do as marks
-        Sokoban.baseState = new State(((byte x, byte y)[])Sokoban.boxes.Clone(), (Worker)Sokoban.worker.Clone());
+        boxes = _boxes.ToArray();
     }
 
     public IEnumerable<(int col, int row)> FindBlocks(Block.Type block)
