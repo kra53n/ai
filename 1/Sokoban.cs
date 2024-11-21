@@ -24,7 +24,7 @@ class Sokoban
     public static Texture2D texture;
     public static Map? map;
     public static (byte x, byte y)[]? boxes = null;
-    public static Worker worker = new Worker(0, 0);
+    public static Worker worker = new Worker(0, 0, map);
 
     public static State? baseState = null;
     public static List<State>? states = null;
@@ -42,16 +42,10 @@ class Sokoban
 
     public static void Main(string[] args)
     {
-        if (args.Length == 1)
-        {
-            Init(args[0]);
-        }
-        else
-        {
-            Init();
-        }
+        //Measures.Do();
+        //return;
 
-        Raylib.SetTargetFPS(60);
+        Init(args);
 
         while (!Raylib.WindowShouldClose())
         {
@@ -157,7 +151,7 @@ class Sokoban
         Sokoban.searchMethod = searchMethod;
         Raylib.SetWindowTitle($"Осуществляется {searchMethod}");
         currStateIdx = 0;
-        states = searcher.Search(new State(Sokoban.baseState.boxes, Sokoban.baseState.worker));
+        states = searcher.Search(new State(Sokoban.baseState.boxes, Sokoban.baseState.worker, map));
         Raylib.SetWindowTitle($"{char.ToUpper(searchMethod[0]) + searchMethod.Substring(1)} завершён");
     }
 
@@ -328,9 +322,11 @@ class Sokoban
         GlobalControlsProcessor();
     }
 
-    public static void Init(string? file = null)
+    public static void Init(string[] file)
     {
-        Raylib.InitWindow(WIDTH, HEIGHT, "СИИ 1 лаба - игра Сокобан");
+        Raylib.SetTraceLogLevel(TraceLogLevel.None);
+        Raylib.InitWindow(WIDTH, HEIGHT, "СИИ лабы - игра Сокобан");
+        Raylib.SetTargetFPS(60);
 
         Image assetImage = Raylib.LoadImage(TEXTURE);
         unsafe
@@ -343,7 +339,7 @@ class Sokoban
         map = new Map(0, 0);
         try
         {
-            LoadAndApplyMap(file);
+            LoadAndApplyMap(file[0]);
         } 
         catch (Exception)
         {
@@ -371,8 +367,9 @@ class Sokoban
 
     public static void ApplyMap()
     {
+        Sokoban.worker = map.worker;
         Sokoban.boxes = map.boxes;
-        Sokoban.baseState = new State(((byte x, byte y)[])Sokoban.boxes.Clone(), (Worker)Sokoban.worker.Clone());
+        Sokoban.baseState = new State(((byte x, byte y)[])Sokoban.boxes.Clone(), (Worker)Sokoban.worker.Clone(), map);
         Rescale();
     }
 
@@ -437,7 +434,7 @@ class Sokoban
 
 
 
-partial class Block
+public partial class Block
 {
     public enum Type : byte
     {
@@ -468,22 +465,25 @@ partial class Block
     //    return o.x == x && o.y == y;
     //}
 
-    public static (byte x, byte y)[] CloneBlocks((byte x, byte y)[] old)
-    {
-        (byte x, byte y)[] blocks = new (byte x, byte y)[Sokoban.baseState.boxes.Length];
-        for (int i = 0; i < Sokoban.baseState.boxes.Length; i++)
-        {
-            blocks[i] = ((byte x, byte y))old[i];
-        }
-        return blocks;
-    }
+
+    // TODO(kra53n): Delete this function cause we dont need it due to referencing in every state to map
+    //public static (byte x, byte y)[] CloneBlocks((byte x, byte y)[] old)
+    //{
+    //    (byte x, byte y)[] blocks = new (byte x, byte y)[Sokoban.baseState.boxes.Length];
+    //    for (int i = 0; i < Sokoban.baseState.boxes.Length; i++)
+    //    {
+    //        blocks[i] = ((byte x, byte y))old[i];
+    //    }
+    //    return blocks;
+    //}
 }
 
-partial class Map : ICloneable
+public partial class Map : ICloneable
 {
     public byte[,]? map;
     public int x;
     public int y;
+    public Worker worker;
     public (byte x, byte y)[]? marks;
     public (byte x, byte y)[]? boxes;
     
@@ -505,7 +505,8 @@ partial class Map : ICloneable
                 switch (cell)
                 {
                 case (byte)Block.Type.Worker:
-                    Sokoban.worker = new Worker(col, row);
+                    //Sokoban.worker = new Worker(col, row, this);
+                    worker = new Worker(col, row, this);
                     SetCell(row, col, (int)Block.Type.Floor);
                     break;
                 case (byte)Block.Type.Box:
@@ -701,6 +702,16 @@ partial class Map : ICloneable
         }
     }
 
+    public static Map GetEmptySquareMap(int wdt, int hgt)
+    {
+        var m = new Map(0, 0);
+        m.map = new byte[hgt, wdt];
+        for (int y = 0; y < hgt; y++)
+            for (int x = 0; x < wdt; x++)
+                m.map[y,x] = x == 0 || wdt-1 == 0 || y == 0 || y == hgt-1 ? (byte)Block.Type.Wall : (byte)Block.Type.Floor;
+        return m;
+    }
+
     public object Clone()
     {
         if (map is null)
@@ -710,6 +721,7 @@ partial class Map : ICloneable
         Map m = new Map(x, y);
         m.map = (byte[,])map.Clone();
         m.marks = ((byte, byte)[])marks.Clone();
+        m.boxes = ((byte, byte)[])boxes.Clone();
         return m;
     }
 }
@@ -787,6 +799,7 @@ public class Worker : ICloneable
     static int TEXTURE_POS = 5;
     public int x;
     public int y;
+    public Map map;
 
     public enum Direction
     {
@@ -798,10 +811,11 @@ public class Worker : ICloneable
    
     public static readonly Direction[] directions = { Direction.Up, Direction.Left, Direction.Down, Direction.Right };
 
-    public Worker(int _x, int _y)
+    public Worker(int _x, int _y, Map _map)
     {
         x = _x;
         y = _y;
+        map = _map;
     }
 
     public void Draw(int mapX, int mapY)
@@ -853,11 +867,11 @@ public class Worker : ICloneable
     public void Up((byte x, byte y)[] boxes)
     {
         y -= 1;
-        if (Sokoban.map.Stepped(this, boxes))
+        if (map.Stepped(this, boxes))
         {
-            if (Sokoban.map.CanMoveBox(this, Worker.Direction.Up, boxes))
+            if (map.CanMoveBox(this, Worker.Direction.Up, boxes))
             {
-                Sokoban.map.MoveBox(this, Worker.Direction.Up, boxes);
+                map.MoveBox(this, Worker.Direction.Up, boxes);
             }
             else
             {
@@ -869,11 +883,11 @@ public class Worker : ICloneable
     public void Left((byte x, byte y)[] boxes)
     {
         x -= 1;
-        if (Sokoban.map.Stepped(this, boxes))
+        if (map.Stepped(this, boxes))
         {
-            if (Sokoban.map.CanMoveBox(this, Worker.Direction.Left, boxes))
+            if (map.CanMoveBox(this, Worker.Direction.Left, boxes))
             {
-                Sokoban.map.MoveBox(this, Worker.Direction.Left, boxes);
+                map.MoveBox(this, Worker.Direction.Left, boxes);
             }
             else
             {
@@ -885,11 +899,11 @@ public class Worker : ICloneable
     public void Down((byte x, byte y)[] boxes)
     {
         y += 1;
-        if (Sokoban.map.Stepped(this, boxes))
+        if (map.Stepped(this, boxes))
         {
-            if (Sokoban.map.CanMoveBox(this, Worker.Direction.Down, boxes))
+            if (map.CanMoveBox(this, Worker.Direction.Down, boxes))
             {
-                Sokoban.map.MoveBox(this, Worker.Direction.Down, boxes);
+                map.MoveBox(this, Worker.Direction.Down, boxes);
             }
             else
             {
@@ -901,11 +915,11 @@ public class Worker : ICloneable
     public void Right((byte x, byte y)[] boxes)
     {
         x += 1;
-        if (Sokoban.map.Stepped(this, boxes))
+        if (map.Stepped(this, boxes))
         {
-            if (Sokoban.map.CanMoveBox(this, Worker.Direction.Right, boxes))
+            if (map.CanMoveBox(this, Worker.Direction.Right, boxes))
             {
-                Sokoban.map.MoveBox(this, Worker.Direction.Right, boxes);
+                map.MoveBox(this, Worker.Direction.Right, boxes);
             }
             else
             {

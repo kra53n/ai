@@ -55,6 +55,7 @@ class Editor
             if (level != null)
             {
                 Sokoban.map.Load(level);
+                Sokoban.ApplyMap();
             }
             Sokoban.Rescale();
         }
