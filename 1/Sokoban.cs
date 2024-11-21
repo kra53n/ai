@@ -343,7 +343,7 @@ class Sokoban
         } 
         catch (Exception)
         {
-            map.Load(new byte[,] {
+            LoadAndApplyMap(new byte[,] {
                 { 1, 1, 1, 1, 9, 9, 9, 9, 9, 9 },
                 { 1, 0, 3, 1, 9, 9, 9, 9, 9, 9 },
                 { 1, 0, 0, 1, 1, 1, 9, 9, 9, 9 },
@@ -355,8 +355,12 @@ class Sokoban
                 { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
                 { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 }
             });
-            ApplyMap();
         }
+    }
+    public static void LoadAndApplyMap(byte[,] _map)
+    {
+        map.Load(_map);
+        ApplyMap();
     }
 
     public static void LoadAndApplyMap(string file)
