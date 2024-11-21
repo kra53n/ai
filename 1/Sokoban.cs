@@ -42,8 +42,8 @@ class Sokoban
 
     public static void Main(string[] args)
     {
-        //Measures.Do();
-        //return;
+        Measures.Do();
+        return;
 
         Init(args);
 
@@ -712,7 +712,7 @@ public partial class Map : ICloneable
         m.map = new byte[hgt, wdt];
         for (int y = 0; y < hgt; y++)
             for (int x = 0; x < wdt; x++)
-                m.map[y,x] = x == 0 || wdt-1 == 0 || y == 0 || y == hgt-1 ? (byte)Block.Type.Wall : (byte)Block.Type.Floor;
+                m.map[y,x] = x == 0 || x == wdt-1 || y == 0 || y == hgt-1 ? (byte)Block.Type.Wall : (byte)Block.Type.Floor;
         return m;
     }
 
