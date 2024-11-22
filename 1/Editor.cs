@@ -5,10 +5,12 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Text.RegularExpressions;
 using TinyDialogsNet;
+using static Sokoban;
 
 public class Editor
 {
     private static string savePath = Environment.ProcessPath.Substring(0, Environment.ProcessPath.LastIndexOf("\\") + 1);
+    private static string openPath = savePath;
 
     private static List<Block> blocks = new List<Block> {
         new Block(Sokoban.BLOCK_SIZE * 0, 0, Block.Type.Floor),
@@ -72,6 +74,16 @@ public class Editor
 
         if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
         {
+            if (Raylib.IsKeyPressed(KeyboardKey.F))
+            {
+                var filter = new FileFilter(".txt files", ["*.txt"]);
+                var (canceled, openPaths) = TinyDialogs.OpenFileDialog("Choose level", openPath, false, filter);
+                if (!canceled)
+                {
+                    openPath = openPaths.First();
+                    LoadLevel(Sokoban.LoadMapContentFromFile(openPath));
+                }
+            }
             if (Raylib.IsKeyPressed(KeyboardKey.G) || Raylib.IsKeyPressed(KeyboardKey.E))
             {
                 Sokoban.mode = Sokoban.Mode.Game;
