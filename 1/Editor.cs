@@ -18,6 +18,13 @@ class Editor
     private static int defaultBlocksCount = blocks.Count;
 
     private static Block.Type? currBlock;
+    private static KeyboardKey[] blockShortcuts = {
+        KeyboardKey.Q,
+        KeyboardKey.W,
+        KeyboardKey.E,
+        KeyboardKey.R,
+        KeyboardKey.T,
+    };
     private static bool isSaved = false;
 
     private static Func<bool> IsLeftMouseButtonDown = () => Raylib.IsMouseButtonDown(MouseButton.Left) || Raylib.IsKeyDown(KeyboardKey.One);
@@ -39,6 +46,7 @@ class Editor
                 Raylib.SetWindowTitle("Только один файл можно загрузить за раз");
             }
         }
+
         if (IsLeftMouseButtonDown() && mouse.Y != 0)
         {
             InsertBlock(mouse);
@@ -46,20 +54,30 @@ class Editor
         else if (IsRightMouseButtonDown() || IsLeftMouseButtonDown())
         {
             currBlock = GetBlock(mouse);
-            Raylib.SetWindowTitle($"Редактор Sokoban, блок({currBlock})");
+            changeTitleByCurrBlockChanging();
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.G) || Raylib.IsKeyPressed(KeyboardKey.E))
+
+        UpdateCurrBlockByKeyboard();
+
+
+        if (Raylib.IsKeyPressed(KeyboardKey.M))
         {
-            Sokoban.mode = Sokoban.Mode.Game;
-            var level = GetLevel();
-            if (level != null)
-            {
-                Sokoban.map.Load(level);
-            }
-            Sokoban.Rescale();
+            LoadLevel(Map.GetEmptySquareMap(16, 16).map);
         }
+
         if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
         {
+            if (Raylib.IsKeyPressed(KeyboardKey.G) || Raylib.IsKeyPressed(KeyboardKey.E))
+            {
+                Sokoban.mode = Sokoban.Mode.Game;
+                var level = GetLevel();
+                if (level != null)
+                {
+                    Sokoban.LoadAndApplyMap(level);
+                }
+                Sokoban.Rescale();
+            }
+
             if (Raylib.IsKeyPressed(KeyboardKey.S))
             {
                 var level = GetLevel();
@@ -92,6 +110,24 @@ class Editor
                 }
             }
         }
+    }
+
+    private static void UpdateCurrBlockByKeyboard()
+    {
+        for (int i = 0; i < blockShortcuts.Length; i++)
+        {
+            if (Raylib.IsKeyPressed(blockShortcuts[i]))
+            {
+                currBlock = (Block.Type)i;
+                changeTitleByCurrBlockChanging();
+                break;
+            }
+        }
+    }
+
+    private static void changeTitleByCurrBlockChanging()
+    {
+        Raylib.SetWindowTitle($"Редактор Sokoban, блок({currBlock})");
     }
 
     public static void Draw()

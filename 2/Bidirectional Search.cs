@@ -31,26 +31,26 @@ public partial class State
     {
         foreach (Worker.Direction direction in Worker.directions)
         {
-            var b = Block.CloneBlocks(boxes);
+            var b = ((byte x, byte y)[])boxes.Clone();
             Worker w = (Worker)worker.Clone();
             var wRowNew = w.y + direction.GetY();
             var wColNew = w.x + direction.GetX();
             var checkBoxRow = w.y - direction.GetY();
             var checkBoxCol = w.x - direction.GetX();
-            var block = Sokoban.map.GetCell(wRowNew, wColNew, b);
+            var block = map.GetCell(wRowNew, wColNew, b);
             if (block != (byte)Block.Type.Floor && block != (byte)Block.Type.Mark)
             {
                 continue;
             }
             w.x = wColNew;
             w.y = wRowNew;
-            yield return new State(b, w);
+            yield return new State(b, w, map);
             
-            if (Sokoban.map.GetCell(checkBoxRow, checkBoxCol, b) != (byte)Block.Type.Box)
+            if (map.GetCell(checkBoxRow, checkBoxCol, b) != (byte)Block.Type.Box)
             {
                 continue;
             }
-            b = Block.CloneBlocks(b);
+            b = ((byte x, byte y)[])boxes.Clone();
             w = (Worker)w.Clone();
             for (int i = 0; i < b.Length; i++)
             {
@@ -61,7 +61,7 @@ public partial class State
                     break;
                 }
             }
-            yield return new State(b, w);
+            yield return new State(b, w, map);
         }
     }
 }
@@ -115,20 +115,15 @@ partial class BidirectionalStatistic : Statistic
 class BidirectionalSearch : ISearcher<List<State>>
 {
     private double printRate, lastFrame;
-    private BidirectionalStatistic? statistic;
+    public BidirectionalStatistic? statistic;
     private HashSet<State>? openNodes;
     private HashSet<State>? openNodesReversed;
     private HashSet<State>? closedNodes;
     private HashSet<State>? closedNodesReversed;
+    private Map map;
 
     public BidirectionalSearch()
     {
-        statistic = new();
-
-        openNodes = [new State(Sokoban.baseState.boxes, Sokoban.baseState.worker)];
-        openNodesReversed = [.. GenerateFinalStates()];
-        closedNodes = new();
-        closedNodesReversed = new();
     }
 
     private List<State>? NormalIteration()
@@ -191,10 +186,19 @@ class BidirectionalSearch : ISearcher<List<State>>
         return null;
     }
 
-    public List<State>? Search()
+    public List<State>? Search(State begState)
     {
         printRate = 1;
         lastFrame = 0;
+
+        statistic = new();
+        map = begState.map;
+
+        openNodes = [new State(map.boxes, map.worker, begState.map)];
+        openNodesReversed = [.. GenerateFinalStates()];
+        closedNodes = new();
+        closedNodesReversed = new();
+
         while (true)
         {
             List<State>? result = null;
@@ -229,10 +233,10 @@ class BidirectionalSearch : ISearcher<List<State>>
 
     private IEnumerable<State> GenerateFinalStates()
     {
-        (byte x, byte y)[] boxes = new (byte x, byte y)[Sokoban.baseState.boxes.Length];
+        (byte x, byte y)[] boxes = new (byte x, byte y)[map.boxes.Length];
 
         var nextBox = 0;
-        foreach ((int col, int row) in Sokoban.map.FindBlocks(Block.Type.Mark))
+        foreach ((int col, int row) in map.FindBlocks(Block.Type.Mark))
         {
             boxes[nextBox++] = ((byte, byte))(col, row);
         }
@@ -243,12 +247,12 @@ class BidirectionalSearch : ISearcher<List<State>>
             {
                 var checkFreeRow = b.y + direction.GetY();
                 var checkFreeCol = b.x + direction.GetX();
-                if (Sokoban.map.GetCell(checkFreeRow, checkFreeCol, boxes) == (byte)Block.Type.Floor)
+                if (map.GetCell(checkFreeRow, checkFreeCol, boxes) == (byte)Block.Type.Floor)
                 {
-                    Worker w = (Worker)Sokoban.worker.Clone();
+                    Worker w = (Worker)map.worker.Clone();
                     w.x = checkFreeCol;
                     w.y = checkFreeRow;
-                    yield return new State(Block.CloneBlocks(boxes), w);
+                    yield return new State(((byte, byte)[])boxes.Clone(), w, map);
                 }
             }
         }

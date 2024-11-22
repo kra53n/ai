@@ -5,7 +5,7 @@ using static System.Net.WebRequestMethods;
 
 interface ISearcher<T>
 {
-    public T? Search();
+    public T? Search(State begState);
 }
 
 class Searcher : ISearcher<List<State>>
@@ -38,13 +38,13 @@ class Searcher : ISearcher<List<State>>
         type = _type;
     }
 
-    public List<State>? Search()
+    public List<State>? Search(State begState)
     {
         Statistic statistic = new Statistic();
 
         openNodes.Clear();
         closeNodes.Clear();
-        openNodes.Push(new State(Sokoban.baseState.boxes, Sokoban.baseState.worker));
+        openNodes.Push(begState);
 
         while (!openNodes.Empty())
         {
@@ -75,23 +75,29 @@ public partial class State
     public Worker worker;
     public State? prv;
     public int hash;
+	public Map map;
 
-    public State((byte x, byte y)[] _boxes, Worker _worker)
+    public State((byte x, byte y)[] _boxes, Worker _worker, Map? _map)
     {
         boxes = _boxes;
         worker = _worker;
 
-        var map = (Map)Sokoban.map.Clone();
-        map.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
+        map = _map;
+        if (map == null)
+        {
+            map = Sokoban.map;
+        }
+        var m = (Map)_map.Clone();
+        m.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
         foreach (var b in boxes)
         {
-            map.SetCell(b.y, b.x, (byte)Block.Type.Box);
+            m.SetCell(b.y, b.x, (byte)Block.Type.Box);
         }
-        for (int row = 0; row < map.GetRowsNum(); row++)
+        for (int row = 0; row < m.GetRowsNum(); row++)
         {
-            for (int col = 0; col < map.GetColsNum(); col++)
+            for (int col = 0; col < m.GetColsNum(); col++)
             {
-                hash = (hash * 10781 + (int)map.GetCell(row, col));
+                hash = (hash * 10781 + (int)m.GetCell(row, col));
             }
         }
     }
@@ -125,19 +131,20 @@ public partial class State
 
     public bool IsGoal()
     {
-        return Sokoban.map.Complete(boxes);
+        return map.Complete(boxes);
     }
 
     public virtual IEnumerable<State> GetGeneratedStates()
     {
         foreach (Worker.Direction direction in Worker.directions)
         {
-            var b = Block.CloneBlocks(boxes);
+            var b = ((byte, byte)[])boxes.Clone();
             Worker w = (Worker)worker.Clone();
             w.Move(direction, b);
             if (w.x != worker.x || w.y != worker.y)
             {
-                yield return new State(b, w);
+                var state = new State(b, w, map);
+                yield return state;
             }
         }
     }
