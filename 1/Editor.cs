@@ -26,7 +26,9 @@ public class Editor
         KeyboardKey.W,
         KeyboardKey.E,
         KeyboardKey.R,
-        KeyboardKey.T,
+        KeyboardKey.D,
+        KeyboardKey.F,
+        KeyboardKey.A
     };
     private static bool isSaved = false;
 
@@ -130,6 +132,10 @@ public class Editor
         {
             if (Raylib.IsKeyPressed(blockShortcuts[i]))
             {
+                if (i == 6)
+                {
+                    i = 9;
+                }
                 currBlock = (Block.Type)i;
                 changeTitleByCurrBlockChanging();
                 break;
