@@ -11,7 +11,7 @@ class DepthFirstSearch : ISearcher<List<State>>
         Stack<DepthFirstSearchState> closedNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> nxtOpenNodes = new Stack<DepthFirstSearchState>();
 
-        nxtOpenNodes.Push(new DepthFirstSearchState(begState.boxes, begState.worker, 0));
+        nxtOpenNodes.Push(new DepthFirstSearchState(begState.boxes, begState.worker, begState.map, 0));
 
         for (int lvl = 0; ; lvl++)
         {
@@ -49,12 +49,12 @@ class DepthFirstSearchState : State
 {
     public int lvl;
 
-    public DepthFirstSearchState((byte x, byte y)[] boxes, Worker _worker, int _lvl) : base(boxes, _worker)
+    public DepthFirstSearchState((byte x, byte y)[] boxes, Worker _worker, Map map, int _lvl) : base(boxes, _worker, map)
     {
         lvl = _lvl;
     }
 
-    public DepthFirstSearchState(State state, int _lvl) : base(state.boxes, state.worker)
+    public DepthFirstSearchState(State state, Map map, int _lvl) : base(state.boxes, state.worker, map)
     {
         lvl = _lvl;
     }
@@ -63,7 +63,7 @@ class DepthFirstSearchState : State
     {
         foreach (State s in base.GetGeneratedStates())
         {
-            yield return new DepthFirstSearchState(s, lvl + 1);
+            yield return new DepthFirstSearchState(s, map, lvl + 1);
         }
     }
 }

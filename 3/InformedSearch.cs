@@ -10,25 +10,25 @@ using System.Threading.Tasks;
 public class InformedState : State
 {
     public int f = 0, g = 0;
-    public InformedState((byte x, byte y)[] _boxes, Worker _worker) : base(_boxes, _worker)
+    public InformedState((byte x, byte y)[] _boxes, Worker _worker, Map map) : base(_boxes, _worker, map)
     {
         this.f = 0;
         this.g = 0;
     }
-    public InformedState((byte x, byte y)[] _boxes, Worker _worker, int f, int g) : base(_boxes, _worker)
+    public InformedState((byte x, byte y)[] _boxes, Worker _worker, Map map, int f, int g) : base(_boxes, _worker, map)
     {
         this.f = f;
         this.g = g;
     }
 
-    public InformedState(State state) : base(state.boxes, state.worker)
+    public InformedState(State state, Map map) : base(state.boxes, state.worker, map)
     {
         this.f = 0;
         this.g = 0;
         prv = state.prv;
     }
 
-    public InformedState(State state, int f, int g) : base(state.boxes, state.worker)
+    public InformedState(State state, Map map, int f, int g) : base(state.boxes, state.worker, map)
     {
         this.f = f;
         this.g = g;
@@ -39,7 +39,7 @@ public class InformedState : State
     {
         foreach (var state in base.GetGeneratedStates())
         {
-            yield return new InformedState(state);
+            yield return new InformedState(state, map);
         }
     }
 }
@@ -66,7 +66,7 @@ partial class InformedStatistic : Statistic
     public void Print()
     {
         string s = $"\n\tРезультат {name} эвристического поиска:\n\n";
-        s += $"Длина пути: {pathLenght}\n";
+        s += $"Длина пути: {pathLength}\n";
         s += $"Итераций: {iters}\n";
         s += $"Открытые узлы:\n";
         s += $"\tКоличество при завершении: {currOpenNodesNum}\n";
@@ -109,12 +109,12 @@ public class InformedSearch : ISearcher<List<State>>
         printRate = 1;
         lastFrame = 0;
 
-        statistic.nil()
+        statistic.nil();
 
-        State startState = new(Sokoban.baseState.boxes, Sokoban.baseState.worker);
+        State startState = new(begState.map.boxes, begState.worker, begState.map);
         openNodes = new(state => state.f)
         {
-            new InformedState(startState, h(startState), 0)
+            new InformedState(startState, begState.map, h(startState), 0)
         };
         closedNodes = new();
 
@@ -123,7 +123,7 @@ public class InformedSearch : ISearcher<List<State>>
             var curr = openNodes.Pop();
             if (curr.IsGoal())
             {
-                statistic.pathLenght = curr.g;
+                statistic.pathLength = curr.g;
                 statistic.Print();
                 return curr.Unwrap();
             }
