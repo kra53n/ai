@@ -42,9 +42,6 @@ class Sokoban
 
     public static void Main(string[] args)
     {
-        Measures.Do();
-        return;
-
         Init(args);
 
         while (!Raylib.WindowShouldClose())
