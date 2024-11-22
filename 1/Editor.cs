@@ -4,9 +4,12 @@ using System.Data;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using TinyDialogsNet;
 
-class Editor
+public class Editor
 {
+    private static string savePath = Environment.ProcessPath.Substring(0, Environment.ProcessPath.LastIndexOf("\\") + 1);
+
     private static List<Block> blocks = new List<Block> {
         new Block(Sokoban.BLOCK_SIZE * 0, 0, Block.Type.Floor),
         new Block(Sokoban.BLOCK_SIZE * 1, 0, Block.Type.Wall),
@@ -82,19 +85,28 @@ class Editor
             {
                 var level = GetLevel();
                 if (level != null)
-                {
-                    int minIndex = 0;
-                    foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory(), "level*.txt"))
+                { 
+                    var filter = new FileFilter(".txt files", ["*.txt"]);
+                    (var canceled, savePath) = TinyDialogs.SaveFileDialog("Save level", savePath + "level.txt", filter);
+                    if (!canceled)
                     {
-                        var r = new Regex(".*level(.*?)\\.txt").Match(file);
-                        if (r.Groups[1].Value != "")
-                        {
-                            minIndex = Math.Max(minIndex, int.Parse(r.Groups[1].Value));
-                        }
+                        File.WriteAllLines(savePath, byte2DArrayToStringArray(level));
+                        Raylib.SetWindowTitle($"Saved as ({savePath})");
+                        savePath = savePath.Substring(0, savePath.LastIndexOf("\\") + 1);
                     }
-                    minIndex++;
-                    File.WriteAllLines(Directory.GetCurrentDirectory() + $"/level{minIndex}.txt", byte2DArrayToStringArray(level));
-                    Raylib.SetWindowTitle($"Saved as ({Directory.GetCurrentDirectory() + $"/level{minIndex}.txt"})");
+                    //int minIndex = 0;
+                    //foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory(), "level*.txt"))
+                    //{
+                    //    var r = new Regex(".*level(.*?)\\.txt").Match(file);
+                    //    if (r.Groups[1].Value != "")
+                    //    {
+                    //        minIndex = Math.Max(minIndex, int.Parse(r.Groups[1].Value));
+                    //    }
+                    //}
+                    //minIndex++;
+                    //File.WriteAllLines(Directory.GetCurrentDirectory() + $"/level{minIndex}.txt", byte2DArrayToStringArray(level));
+                    //Raylib.SetWindowTitle($"Saved as ({Directory.GetCurrentDirectory() + $"/level{minIndex}.txt"})");
+
                 }
             }
         }

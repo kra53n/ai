@@ -168,7 +168,6 @@ public class InformedSearch : ISearcher<List<State>>
                 Console.Clear();
                 Console.WriteLine($"On.count = {openNodes.Count()}");
                 Console.WriteLine($"Cn.count = {closedNodes.Count()}");
-                Console.WriteLine($"h = {openNodes.}");
                 lastFrame = newFrame;
             }
         }

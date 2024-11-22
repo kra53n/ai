@@ -2,14 +2,18 @@
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection.Emit;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using TinyDialogsNet;
 using static Worker;
 
 class Sokoban
 {
+    private static string openPath = Environment.ProcessPath.Substring(0, Environment.ProcessPath.LastIndexOf("\\") + 1);
+
     public const string TEXTURE = "../../../assets.png";
     public const int WIDTH = 800;
     public const int HEIGHT = 800;
@@ -271,6 +275,21 @@ class Sokoban
     {
         if (Raylib.IsKeyDown(KeyboardKey.LeftControl))
         {
+            if (Raylib.IsKeyPressed(KeyboardKey.F))
+            {
+                var filter = new FileFilter(".txt files", ["*.txt"]);
+                var (canceled, openPaths) = TinyDialogs.OpenFileDialog("Choose level", openPath, false, filter);
+                if (!canceled)
+                {
+                    openPath = openPaths.First();
+                    LoadAndApplyMap(openPath);
+                    if (mode == Mode.Replay)
+                    {
+                        ToggleReplayGameMode();
+                    }
+                }
+            }
+
             if (Raylib.IsKeyPressed(KeyboardKey.R))
             {
                 ToggleReplayGameMode();
