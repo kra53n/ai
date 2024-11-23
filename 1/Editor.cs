@@ -105,12 +105,12 @@ public class Editor
                     {
                         savePath += "level.txt";
                     }
-                    (var canceled, savePath) = TinyDialogs.SaveFileDialog("Save level", savePath, filter);
+                    var (canceled, savePathT) = TinyDialogs.SaveFileDialog("Save level", savePath, filter);
                     if (!canceled)
                     {
-                        File.WriteAllLines(savePath, byte2DArrayToStringArray(level));
-                        Raylib.SetWindowTitle($"Saved as ({savePath})");
-                        savePath = savePath.Substring(0, savePath.LastIndexOf("\\") + 1);
+                        File.WriteAllLines(savePathT, byte2DArrayToStringArray(level));
+                        Raylib.SetWindowTitle($"Saved as ({savePathT})");
+                        savePath = savePathT.Substring(0, savePathT.LastIndexOf("\\") + 1);
                         openPath = savePath;
                     }
                     //int minIndex = 0;
