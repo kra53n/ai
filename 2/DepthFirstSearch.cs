@@ -2,10 +2,22 @@ using System.Data;
 
 class DepthFirstSearch : ISearcher<List<State>>
 {
+    DepthFirstSearchStatistic statistic;
+
+    public int GetIters()
+    {
+        return statistic.iters;
+    }
+
+    public int GetN()
+    {
+        return statistic.maxNodesNum;
+    }
+
     // TODO(kra53n): delete *.Clear() in other Search's
     public List<State>? Search(State begState)
     {
-        DepthFirstSearchStatistic statistic = new DepthFirstSearchStatistic();
+        statistic = new DepthFirstSearchStatistic();
 
         Stack<DepthFirstSearchState> openNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> closedNodes = new Stack<DepthFirstSearchState>();
@@ -70,12 +82,12 @@ class DepthFirstSearchState : State
 
 class DepthFirstSearchStatistic
 {
-    private int iters = 0;
+    public int iters = 0;
     private int currOpenNodesNum = 0;
     private int maxOpenNodesNum = 0;
     private int currCloseNodesNum = 0;
     private int maxCloseNodesNum = 0;
-    private int maxNodesNum = 0;
+    public int maxNodesNum = 0;
     private int currLvl;
 
     public void Collect(Stack<DepthFirstSearchState> openNodes, Stack<DepthFirstSearchState> closeNodes, int lvl)

@@ -177,7 +177,7 @@ public class InformedSearch : ISearcher<List<State>>
     static public int BestHeuristic(State state)
     {
         (byte x, byte y) nearestBox = (0, 0);
-        (byte x, byte y)[] marks = Sokoban.map.marks;
+        (byte x, byte y)[] marks = state.map.marks;
         var boxOnMarks = Enumerable.Repeat(false, marks.Length).ToArray();
         int min = int.MaxValue;
         for (int i = 0; i < state.boxes.Length; i++)
@@ -227,7 +227,7 @@ public class InformedSearch : ISearcher<List<State>>
     static public int BetterHeuristic(State state)
     {
         int res = 0;
-        (byte x, byte y)[] marks = Sokoban.map.marks;
+        (byte x, byte y)[] marks = state.map.marks;
         foreach ((byte x, byte y) b in state.boxes)
         {
             List<int> dists = new();
@@ -245,7 +245,7 @@ public class InformedSearch : ISearcher<List<State>>
         int counter = 0;
         foreach ((byte x, byte y) b in state.boxes)
         {
-            if (Sokoban.map.GetCell(b.y, b.x) != (byte)Block.Type.Mark)
+            if (state.map.GetCell(b.y, b.x) != (byte)Block.Type.Mark)
             {
                 counter++;
             }
@@ -255,12 +255,12 @@ public class InformedSearch : ISearcher<List<State>>
 
     static public int WorstHeuristic(State state)
     {
-        if (Sokoban.map.marks == null)
+        if (state.map.marks == null)
         {
             return BestHeuristic(state);
         }
         int res = 0;
-        (byte x, byte y)[] marks = Sokoban.map.marks;
+        (byte x, byte y)[] marks = state.map.marks;
         foreach ((byte x, byte y) b in state.boxes)
         {
             foreach ((byte x, byte y) m in marks)
@@ -274,7 +274,7 @@ public class InformedSearch : ISearcher<List<State>>
     static public int HorribleHeuristic(State state)
     {
         (byte x, byte y) nearestBox = (0, 0);
-        (byte x, byte y)[] marks = Sokoban.map.marks;
+        (byte x, byte y)[] marks = state.map.marks;
         var boxOnMarks = Enumerable.Repeat(false, marks.Length).ToArray();
         int min = int.MaxValue;
         for (int i = 0; i < state.boxes.Length; i++)
@@ -314,5 +314,15 @@ public class InformedSearch : ISearcher<List<State>>
             res += dists.Min();
         }
         return res + min - 1;
+    }
+
+    public int GetIters()
+    {
+        return statistic.iters;
+    }
+
+    public int GetN()
+    {
+        return statistic.maxNodesNum;
     }
 }

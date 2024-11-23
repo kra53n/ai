@@ -6,6 +6,8 @@ using static System.Net.WebRequestMethods;
 interface ISearcher<T>
 {
     public T? Search(State begState);
+    public int GetIters();
+    public int GetN();
 }
 
 class Searcher : ISearcher<List<State>>
@@ -19,6 +21,7 @@ class Searcher : ISearcher<List<State>>
     private ISequence<State> openNodes;
     private ISequence<State> closeNodes;
     private Type type;
+    private Statistic statistic;
 
     public Searcher(Type _type)
     {
@@ -40,7 +43,7 @@ class Searcher : ISearcher<List<State>>
 
     public List<State>? Search(State begState)
     {
-        Statistic statistic = new Statistic();
+        statistic = new Statistic();
 
         openNodes.Clear();
         closeNodes.Clear();
@@ -66,6 +69,16 @@ class Searcher : ISearcher<List<State>>
             }
         }
         return null;
+    }
+
+    public int GetIters()
+    {
+        return statistic.iters;
+    }
+
+    public int GetN()
+    {
+        return statistic.maxNodesNum;
     }
 }
 
@@ -171,12 +184,12 @@ public partial class State
 
 partial class Statistic
 {
-    protected int iters = 0;
+    public int iters = 0;
     protected int currOpenNodesNum = 0;
     protected int maxOpenNodesNum = 0;
     protected int currClosedNodesNum = 0;
     protected int maxClosedNodesNum = 0;
-    protected int maxNodesNum = 0;
+    public int maxNodesNum = 0;
     public int pathLength = 0;
 
     public void Collect(ISequence<State> openNodes, ISequence<State> closeNodes)

@@ -257,4 +257,14 @@ class BidirectionalSearch : ISearcher<List<State>>
             }
         }
     }
+
+    public int GetIters()
+    {
+        return statistic.iters;
+    }
+
+    public int GetN()
+    {
+        return statistic.maxNodesNum;
+    }
 }
