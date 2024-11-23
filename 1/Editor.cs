@@ -111,6 +111,7 @@ public class Editor
                         File.WriteAllLines(savePath, byte2DArrayToStringArray(level));
                         Raylib.SetWindowTitle($"Saved as ({savePath})");
                         savePath = savePath.Substring(0, savePath.LastIndexOf("\\") + 1);
+                        openPath = savePath;
                     }
                     //int minIndex = 0;
                     //foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory(), "level*.txt"))
