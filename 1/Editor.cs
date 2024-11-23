@@ -9,8 +9,7 @@ using static Sokoban;
 
 public class Editor
 {
-    private static string savePath = Environment.ProcessPath.Substring(0, Environment.ProcessPath.LastIndexOf("\\") + 1);
-    private static string openPath = savePath;
+    private static string savePath = Sokoban.openPath;
 
     private static List<Block> blocks = new List<Block> {
         new Block(Sokoban.BLOCK_SIZE * 0, 0, Block.Type.Floor),
@@ -81,6 +80,7 @@ public class Editor
                 if (!canceled)
                 {
                     openPath = openPaths.First();
+                    savePath = openPath;
                     LoadLevel(Sokoban.LoadMapContentFromFile(openPath));
                 }
             }
