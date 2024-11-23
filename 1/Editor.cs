@@ -101,7 +101,11 @@ public class Editor
                 if (level != null)
                 { 
                     var filter = new FileFilter(".txt files", ["*.txt"]);
-                    (var canceled, savePath) = TinyDialogs.SaveFileDialog("Save level", savePath + "level.txt", filter);
+                    if (!savePath.EndsWith(".txt"))
+                    {
+                        savePath += "level.txt";
+                    }
+                    (var canceled, savePath) = TinyDialogs.SaveFileDialog("Save level", savePath, filter);
                     if (!canceled)
                     {
                         File.WriteAllLines(savePath, byte2DArrayToStringArray(level));
