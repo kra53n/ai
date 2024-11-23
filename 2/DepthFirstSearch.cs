@@ -40,7 +40,7 @@ class DepthFirstSearch : ISearcher<List<State>>
                 statistic.Collect(openNodes, closedNodes, lvl);
                 if (state.IsGoal())
                 {
-                    statistic.Print();
+                    //statistic.Print();
                     return state.Unwrap();
                 }
                 closedNodes.Push(state);    

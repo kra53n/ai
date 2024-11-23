@@ -15,9 +15,9 @@ class Measures
             ("depth", () => new Searcher(Searcher.Type.Depth)),
             ("depth_iterative", () => new DepthFirstSearch()),
             ("bidirectional", () => new BidirectionalSearch()),
-            ("heuristic1", () => new InformedSearch(InformedSearch.BestHeuristic, "лучшего")),
+            ("heuristic1", () => new InformedSearch(InformedSearch.MidHeuristic, "mid")),
             ("heuristic2", () => new InformedSearch(InformedSearch.BetterHeuristic, "получше")),
-            ("heuristic3", () => new InformedSearch(InformedSearch.MidHeuristic, "среднего")),
+            ("heuristic3", () => new InformedSearch(InformedSearch.HorribleHeuristic, "худшего")),
         };
 
         Directory.CreateDirectory("../../../measures");

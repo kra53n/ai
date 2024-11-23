@@ -124,7 +124,7 @@ public class InformedSearch : ISearcher<List<State>>
             if (curr.f - curr.g == 0)
             {
                 statistic.pathLength = curr.g;
-                statistic.Print();
+                //statistic.Print();
                 return curr.Unwrap();
             }
             statistic.Collect(openNodes, closedNodes);
@@ -162,14 +162,14 @@ public class InformedSearch : ISearcher<List<State>>
                 state.prv = curr;
                 openNodes.Add(state);
             }
-            var newFrame = Raylib.GetTime();
-            if (newFrame - lastFrame >= printRate)
-            {
-                Console.Clear();
-                Console.WriteLine($"On.count = {openNodes.Count()}");
-                Console.WriteLine($"Cn.count = {closedNodes.Count()}");
-                lastFrame = newFrame;
-            }
+            //var newFrame = Raylib.GetTime();
+            //if (newFrame - lastFrame >= printRate)
+            //{
+            //    Console.Clear();
+            //    Console.WriteLine($"On.count = {openNodes.Count()}");
+            //    Console.WriteLine($"Cn.count = {closedNodes.Count()}");
+            //    lastFrame = newFrame;
+            //}
         }
         return null;
     }
