@@ -306,13 +306,18 @@ class Sokoban
                     break;
                 }
             }
-            if (Raylib.IsKeyPressed(KeyboardKey.E))
-            {
-                mode = Mode.Edit;
-                SCALE = 1;
-            }
-
             return;
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.M))
+        {
+            Raylib.SetWindowTitle("Is measured");
+            Measures.Do();
+            Raylib.SetWindowTitle("Measured");
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.E))
+        {
+            mode = Mode.Edit;
+            SCALE = 1;
         }
         if (Raylib.IsKeyPressed(KeyboardKey.F))
         {
@@ -517,6 +522,7 @@ public partial class Map : ICloneable
         x = _x;
         y = _y;
     }
+
     public void Load(byte[,] _map)
     {
         map = _map;

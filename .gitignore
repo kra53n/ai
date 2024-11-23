@@ -1,6 +1,7 @@
 bin/
 obj/
 .vs/
+measures/
 
 1/sokoban-skins
 /Kursovaya_SII.docx

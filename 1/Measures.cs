@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,39 +10,33 @@ class Measures
 {
     public static void Do()
     {
-        (string name, ISearcher<List<State>> s)[] searches = new(string, ISearcher<List<State>>)[]
-        {
-            new("", new Searcher(Searcher.Type.Breadth)),
-            new("", new Searcher(Searcher.Type.Depth)),
-            new("", new DepthFirstSearch()),
-            new("", new BidirectionalSearch()),
-            new("", new InformedSearch(InformedSearch.BestHeuristic, "лучшего")),
-            new("", new InformedSearch(InformedSearch.BetterHeuristic, "получше")),
-            new("", new InformedSearch(InformedSearch.MidHeuristic, "среднего")),
-            new("", new InformedSearch(InformedSearch.WorstHeuristic, "худшего")),
+        (string name, Func<ISearcher<List<State>>> factory)[] searches = {
+            ("breadth", () => new Searcher(Searcher.Type.Breadth)),
+            ("depth", () => new Searcher(Searcher.Type.Depth)),
+            ("depth_iterative", () => new DepthFirstSearch()),
+            ("bidirectional", () => new BidirectionalSearch()),
+            ("heuristic1", () => new InformedSearch(InformedSearch.BestHeuristic, "лучшего")),
+            ("heuristic2", () => new InformedSearch(InformedSearch.BetterHeuristic, "получше")),
+            ("heuristic3", () => new InformedSearch(InformedSearch.MidHeuristic, "среднего")),
         };
 
-        GenerateMap(10, 1, 10);
-        return;
-
-        for (int depth = 3; depth <= 10; depth++)
+        Directory.CreateDirectory("../../../measures");
+        Parallel.ForEach(Directory.GetFiles("../../../levels-course"), filename =>
         {
-            for (int boxes = 1; boxes <= 1; boxes++)
+            Map map = new(0, 0);
+            map.Load(Sokoban.LoadMapContentFromFile(filename));
+            Parallel.ForEach(searches, kv =>
             {
-                var map = GenerateMap(depth, boxes, 10);
-                if (map == null) continue;
-                //var begState = GenerateBegState(map);
-                //foreach (var search in searches)
-                //{
-                //	var filename = $"{search.name}_{depth}_{boxes}.txt";
-                //	measure(search.s, begState, filename, depth);
-                //}
-            }
-        }
+                var search = kv.factory();
+                search.Search(new State(map.boxes, map.worker, map));
+                WriteMeasureToFile(kv.name, Path.GetFileName(filename), search);
+            });
+        });
     }
 
-    public static void measure(ISearcher<List<State>> search, State begState, string filename, int depth)
+    public static void WriteMeasureToFile(string searchName, string levelFilename, ISearcher<List<State>> search)
     {
+        File.WriteAllLines($"../../../measures/{searchName + "_" + levelFilename}", [$"iters {search.GetIters()}", $"N {search.GetN()}"]);
     }
 
     public static Map? GenerateMap(int depth, int boxes, int size)
