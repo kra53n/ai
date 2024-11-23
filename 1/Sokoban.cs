@@ -12,7 +12,7 @@ using static Worker;
 
 class Sokoban
 {
-    private static string openPath = Environment.ProcessPath.Substring(0, Environment.ProcessPath.LastIndexOf("\\") + 1);
+    public static string openPath = Environment.ProcessPath.Substring(0, Environment.ProcessPath.LastIndexOf("\\") + 1);
 
     public const string TEXTURE = "../../../assets.png";
     public const int WIDTH = 800;

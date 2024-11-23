@@ -9,8 +9,7 @@ using static Sokoban;
 
 public class Editor
 {
-    private static string savePath = Environment.ProcessPath.Substring(0, Environment.ProcessPath.LastIndexOf("\\") + 1);
-    private static string openPath = savePath;
+    private static string savePath = Sokoban.openPath;
 
     private static List<Block> blocks = new List<Block> {
         new Block(Sokoban.BLOCK_SIZE * 0, 0, Block.Type.Floor),
@@ -81,6 +80,7 @@ public class Editor
                 if (!canceled)
                 {
                     openPath = openPaths.First();
+                    savePath = openPath;
                     LoadLevel(Sokoban.LoadMapContentFromFile(openPath));
                 }
             }
@@ -101,12 +101,17 @@ public class Editor
                 if (level != null)
                 { 
                     var filter = new FileFilter(".txt files", ["*.txt"]);
-                    (var canceled, savePath) = TinyDialogs.SaveFileDialog("Save level", savePath + "level.txt", filter);
+                    if (!savePath.EndsWith(".txt"))
+                    {
+                        savePath += "level.txt";
+                    }
+                    (var canceled, savePath) = TinyDialogs.SaveFileDialog("Save level", savePath, filter);
                     if (!canceled)
                     {
                         File.WriteAllLines(savePath, byte2DArrayToStringArray(level));
                         Raylib.SetWindowTitle($"Saved as ({savePath})");
                         savePath = savePath.Substring(0, savePath.LastIndexOf("\\") + 1);
+                        openPath = savePath;
                     }
                     //int minIndex = 0;
                     //foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory(), "level*.txt"))
