@@ -152,7 +152,7 @@ class Sokoban
         Sokoban.searchMethod = searchMethod;
         Raylib.SetWindowTitle($"Осуществляется {searchMethod}");
         currStateIdx = 0;
-        states = searcher.Search(new State(Sokoban.baseState.boxes, Sokoban.baseState.worker, map));
+        states = searcher.Search(new State(baseState.boxes, baseState.worker, map));
         Raylib.SetWindowTitle($"{char.ToUpper(searchMethod[0]) + searchMethod.Substring(1)} завершён");
     }
 
@@ -747,6 +747,7 @@ public partial class Map : ICloneable
         m.map = (byte[,])map.Clone();
         m.marks = ((byte, byte)[])marks.Clone();
         m.boxes = ((byte, byte)[])boxes.Clone();
+        m.worker = (Worker)worker.Clone();
         return m;
     }
 }
@@ -834,7 +835,7 @@ public class Worker : ICloneable
         Right,
     }
    
-    public static readonly Direction[] directions = { Direction.Up, Direction.Left, Direction.Down, Direction.Right };
+    public static readonly Direction[] directions = { Direction.Right, Direction.Down, Direction.Up, Direction.Left };
 
     public Worker(int _x, int _y, Map _map)
     {
