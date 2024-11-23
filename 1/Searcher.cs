@@ -87,7 +87,7 @@ public partial class State
         {
             map = Sokoban.map;
         }
-        var m = (Map)_map.Clone();
+        var m = (Map)map.Clone();
         m.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
         foreach (var b in boxes)
         {
