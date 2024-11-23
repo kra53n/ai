@@ -187,7 +187,7 @@ public class InformedSearch : ISearcher<List<State>>
             for (int j = 0; j < marks.Length; j++)
             {
 				var m = marks[j];
-                if (boxOnMarks[j] || b.x == m.x && b.y == m.y)
+                if (b == m)
                 {
                     skip = true;
 					boxOnMarks[j] = true;
@@ -233,7 +233,7 @@ public class InformedSearch : ISearcher<List<State>>
             List<int> dists = new();
             foreach ((byte x, byte y) m in marks)
             {
-                dists.Add(Sphere.Dist((m.y, m.y), (b.x, b.y)));
+                dists.Add(Sphere.Dist((m.x, m.y), (b.x, b.y)));
             }
             res += dists.Min();
         }
@@ -284,7 +284,7 @@ public class InformedSearch : ISearcher<List<State>>
             for (int j = 0; j < marks.Length; j++)
             {
                 var m = marks[j];
-                if (boxOnMarks[j] || b.x == m.x && b.y == m.y)
+                if (b == m)
                 {
                     skip = true;
                     boxOnMarks[j] = true;
@@ -296,6 +296,7 @@ public class InformedSearch : ISearcher<List<State>>
                 continue;
             }
             int dist = Sphere.Dist(((byte)state.worker.x, (byte)state.worker.y), (b.x, b.y));
+
             if (min > dist)
             {
                 min = dist;
@@ -303,16 +304,21 @@ public class InformedSearch : ISearcher<List<State>>
             }
         }
 
-        int res = 0;
+        if (boxOnMarks.All(x => x == true))
+        {
+            return 0;
+        }
+
+        int res = min - 1;
         foreach ((byte x, byte y) b in state.boxes)
         {
             List<int> dists = new();
             foreach ((byte x, byte y) m in marks)
             {
-                dists.Add(Sphere.Dist((m.y, m.y), (b.x, b.y)));
+                dists.Add(Sphere.Dist((m.x, m.y), (b.x, b.y)));
             }
             res += dists.Min();
         }
-        return res + min - 1;
+        return res;
     }
 }
