@@ -2,6 +2,7 @@ from pathlib import Path
 import wolframalpha as wa
 from collections import defaultdict
 import asyncio
+import datetime
 
 
 p = Path("measures")
@@ -13,23 +14,20 @@ maps = tuple(range(1, 11))
 app_id = getfixture('APP_ID')
 client = wa.Client(app_id)
 
-def srch(iters, Ns, d, m, search):
-    try:
-        with open(p / f'{search}_level{d}-{m}.txt', 'r') as f:
-            iterr, N = map(int, (i.strip().split()[1] for i in f.readlines()))
-        iters[ds.index(d)] += iterr
-        Ns[ds.index(d)] += N
-        return 1
-    except FileNotFoundError:
-        return 0
-
-working_files = defaultdict()
-working_files.default_factory = list
 for search, val in searches.items():
-    for d in ds:
-        working_files[search].append([])
+    maps_count = [0] * len(ds)
+    for d_index, d in enumerate(ds):
         for m in maps:
-            working_files[search][ds.index(d)].append(srch(val['iters'], val['Ns'], d, m, search))
+            try:
+                with open(p / f'{search}_level{d}-{m}.txt', 'r') as f:
+                    iterr, N = map(int, (i.strip().split()[1] for i in f.readlines()))
+                val['iters'][d_index] += iterr
+                val['Ns'][d_index] += N
+                maps_count[d_index] += 1
+            except FileNotFoundError:
+                continue
+    val['iters'] = [f'{float(v) / maps_count[i]:.3f}' for i, v in enumerate(val['iters'])]
+    val['Ns'] = [f'{float(v) / maps_count[i]:.3f}' for i, v in enumerate(val['Ns'])]
 
 
 async def calc_b(b_list, N, d):
@@ -44,28 +42,25 @@ async def calc_b(b_list, N, d):
             for subpod in pod.subpods:
                 if (b := float(subpod['plaintext'][str(subpod['plaintext']).find('≈') + 1:])) > 0:
                     break
-        b_list[ds.index(d)] = b
+        b_list[ds.index(d)] = f'{b:.3f}'
     except UnboundLocalError as e:
         print(e)
 
 
 async def main():
-    for srch in working_files:
-        for i, val in enumerate(working_files[srch]):
-            working_files[srch][i] = sum(val)
     groups = []
     for search, val in searches.items():
-        val['Ns'] = list(f'{v / working_files[search][i]:.3f}' for i, v in enumerate(val['Ns']))
         for i, d in enumerate(ds):
             groups.append(calc_b(val['bs'], float(val['Ns'][i]), d))
     await asyncio.gather(*groups)
-    for search, val in searches.items():
-        with open("logs.txt", 'a') as f:
+    with open("logs.txt", 'a') as f:
+        f.write(f"\n{f' {str(datetime.datetime.now())} ':-^90}\n\n")
+        for search, val in searches.items():
             f.write(search.capitalize() + '\n')
             f.write("d\t" + '\t'.join(map(str, ds)) + '\n')
-            f.write("iters\t" + '\t'.join(f'{v / working_files[search][i]:.3f}' for i, v in enumerate(val['iters'])) + '\n')
+            f.write("iters\t" + '\t'.join(val['iters']) + '\n')
             f.write("N\t" + '\t'.join(val['Ns']) + '\n')
-            f.write("b\t" + '\t'.join(map(lambda x: f'{x:.3f}', val['bs'])) + '\n')
+            f.write("b\t" + '\t'.join(val['bs']) + '\n\n')
 
 
 asyncio.run(main())
