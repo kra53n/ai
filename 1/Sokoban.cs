@@ -306,6 +306,11 @@ class Sokoban
                     break;
                 }
             }
+            if (Raylib.IsKeyPressed(KeyboardKey.E))
+            {
+                mode = Mode.Edit;
+                SCALE = 1;
+            }
             return;
         }
         if (Raylib.IsKeyPressed(KeyboardKey.M))
@@ -313,11 +318,6 @@ class Sokoban
             Raylib.SetWindowTitle("Is measured");
             Measures.Do();
             Raylib.SetWindowTitle("Measured");
-        }
-        if (Raylib.IsKeyPressed(KeyboardKey.E))
-        {
-            mode = Mode.Edit;
-            SCALE = 1;
         }
         if (Raylib.IsKeyPressed(KeyboardKey.F))
         {
