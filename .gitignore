@@ -4,4 +4,5 @@ obj/
 measures/
 
 1/sokoban-skins
-/Kursovaya_SII.docx
+*.doc*
+*.xl*
