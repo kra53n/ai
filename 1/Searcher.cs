@@ -55,7 +55,7 @@ class Searcher : ISearcher<List<State>>
             statistic.Collect(openNodes, closeNodes);
             if (state.IsGoal())
             {
-                //statistic.Print(type);
+                statistic.Print(type);
                 return state.Unwrap();
             }
             closeNodes.Push(state);

@@ -124,7 +124,7 @@ public class InformedSearch : ISearcher<List<State>>
             if (curr.f - curr.g == 0)
             {
                 statistic.pathLength = curr.g;
-                //statistic.Print();
+                statistic.Print();
                 return curr.Unwrap();
             }
             statistic.Collect(openNodes, closedNodes);
