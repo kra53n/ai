@@ -1,2 +1,2 @@
-iters 275
-N 421
+iters 45
+N 88

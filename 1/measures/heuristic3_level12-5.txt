@@ -1,2 +1,2 @@
-iters 35
-N 71
+iters 26
+N 58

@@ -1,2 +1,2 @@
-iters 53
-N 123
+iters 17
+N 42
