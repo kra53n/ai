@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,10 +11,12 @@ public class OrderedSet<T> : ICollection<T>
 {
     private readonly IDictionary<T, LinkedListNode<T>> m_Dictionary;
     private readonly LinkedList<T> m_LinkedList;
-
-    public OrderedSet()
+    private readonly Func<T, IComparable> sortKey;
+    
+    public OrderedSet(Func<T, IComparable> sortKey)
         : this(EqualityComparer<T>.Default)
     {
+        this.sortKey = sortKey;
     }
 
     public OrderedSet(IEqualityComparer<T> comparer)
@@ -34,8 +37,16 @@ public class OrderedSet<T> : ICollection<T>
     public bool Add(T item)
     {
         if (m_Dictionary.ContainsKey(item)) return false;
-        var node = m_LinkedList.AddLast(item);
-        m_Dictionary.Add(item, node);
+        var skItem = sortKey(item);
+        for (LinkedListNode<T>? i = m_LinkedList.First; i != null; i = i.Next)
+        {
+            if (skItem.CompareTo(sortKey(i.Value)) < 0)
+            {
+                m_Dictionary.Add(item, m_LinkedList.AddBefore(i, item));
+                return true;
+            }
+        }
+        m_Dictionary.Add(item, m_LinkedList.AddLast(item));
         return true;
     }
 

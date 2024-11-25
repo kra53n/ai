@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic;
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,64 +10,120 @@ using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 
+partial class Map
+{
+    public byte GetCell(int row, int col, (byte x, byte y)[] boxes)
+    {
+        foreach (var box in boxes)
+        {
+            if (box.x == col && box.y == row)
+            {
+                return (byte)Block.Type.Box;
+            }
+        }
+        return map[row, col];
+    }
+}
 
-partial class State
+public partial class State
 {
     public IEnumerable<State> GenerateReversedStates()
     {
         foreach (Worker.Direction direction in Worker.directions)
         {
-            Map m = (Map)map.Clone();
+            var b = ((byte x, byte y)[])boxes.Clone();
             Worker w = (Worker)worker.Clone();
-            var wRowNew = w.y + direction.GetY(); 
+            var wRowNew = w.y + direction.GetY();
             var wColNew = w.x + direction.GetX();
             var checkBoxRow = w.y - direction.GetY();
             var checkBoxCol = w.x - direction.GetX();
-            if (m.GetCell(wRowNew, wColNew) != (int)Sokoban.Block.Floor && m.GetCell(wRowNew, wColNew) != (int)Sokoban.Block.Mark)
+            var block = map.GetCell(wRowNew, wColNew, b);
+            if (block != (byte)Block.Type.Floor && block != (byte)Block.Type.Mark)
             {
                 continue;
             }
-            w.Move(m, direction);
-            yield return new State(m, w);
-            m = (Map)m.Clone();
+            w.x = wColNew;
+            w.y = wRowNew;
+            yield return new State(b, w, map);
+            
+            if (map.GetCell(checkBoxRow, checkBoxCol, b) != (byte)Block.Type.Box)
+            {
+                continue;
+            }
+            b = ((byte x, byte y)[])boxes.Clone();
             w = (Worker)w.Clone();
-            if (m.GetCell(checkBoxRow, checkBoxCol) == (int)Sokoban.Block.BoxOnMark)
+            for (int i = 0; i < b.Length; i++)
             {
-                m.SetCell(checkBoxRow, checkBoxCol, (int)Sokoban.Block.Mark);
+                if (b[i].x == checkBoxCol && b[i].y == checkBoxRow)
+                {
+                    b[i].y = (byte)(w.y - direction.GetY());
+                    b[i].x = (byte)(w.x - direction.GetX());
+                    break;
+                }
             }
-            else if (m.GetCell(checkBoxRow, checkBoxCol) == (int)Sokoban.Block.Box)
-            {
-                m.SetCell(checkBoxRow, checkBoxCol, (int)Sokoban.Block.Floor);
-            } 
-            else
-            {
-                continue;
-            }
-            m.SetCell(w.y - direction.GetY(), w.x - direction.GetX(), (int)Sokoban.Block.Box);
-            yield return new State(m, w);
+            yield return new State(b, w, map);
         }
+    }
+}
+
+partial class BidirectionalStatistic : Statistic
+{
+    protected int currOpenNodesNumR = 0;
+    protected int maxOpenNodesNumR = 0;
+    protected int currClosedNodesNumR = 0;
+    protected int maxClosedNodesNumR = 0;
+
+    public void Collect(ICollection<State> openNodes, ICollection<State> closeNodes)
+    {
+        iters++;
+        currOpenNodesNum = openNodes.Count();
+        currClosedNodesNum = closeNodes.Count();
+        maxOpenNodesNum = Math.Max(maxOpenNodesNum, currOpenNodesNum);
+        maxClosedNodesNum = Math.Max(maxClosedNodesNum, currClosedNodesNum);
+        maxNodesNum = Math.Max(maxNodesNum, currOpenNodesNum + currClosedNodesNum + currClosedNodesNumR + currOpenNodesNumR);
+    }
+
+    public void CollectReversed(ICollection<State> openNodes, ICollection<State> closeNodes)
+    {
+        iters++;
+        currOpenNodesNumR = openNodes.Count();
+        currClosedNodesNumR = closeNodes.Count();
+        maxOpenNodesNumR = Math.Max(maxOpenNodesNumR, currOpenNodesNumR);
+        maxClosedNodesNumR = Math.Max(maxClosedNodesNumR, currClosedNodesNumR);
+        maxNodesNum = Math.Max(maxNodesNum, currOpenNodesNum + currClosedNodesNum + currClosedNodesNumR + currOpenNodesNumR);
+    }
+
+    public void Print()
+    {
+        string s = "\n\tРезультаты двунаправленного поиска";
+        s += "\n\n";
+        s += $"Длина пути: {pathLength}\n";
+        s += $"Итераций: {iters}\n";
+        s += $"Открытые узлы:\n";
+        s += $"\tКоличество при завершении: {currOpenNodesNum + currOpenNodesNumR}\n";
+        s += $"\tМаксимальное количество: {maxOpenNodesNum + maxClosedNodesNumR}\n";
+        s += $"Закрыте узлы:\n";
+        s += $"\tКоличество при завершении: {currClosedNodesNum + currClosedNodesNumR}\n";
+        s += $"\tМаксимальное количество: {maxClosedNodesNum + maxClosedNodesNumR}\n";
+        s += $"Максимальное количество хранимых в памяти узлов: {maxNodesNum}\n";
+        s += "\n";
+        Console.WriteLine(s);
     }
 }
 
 
 class BidirectionalSearch : ISearcher<List<State>>
 {
-    private Statistic? statistic;
+    private double printRate, lastFrame;
+    public BidirectionalStatistic? statistic;
     private HashSet<State>? openNodes;
     private HashSet<State>? openNodesReversed;
     private HashSet<State>? closedNodes;
     private HashSet<State>? closedNodesReversed;
+    private Map map;
 
     public BidirectionalSearch()
     {
-        statistic = new();
-
-        openNodes = new();
-        openNodes.Add(new State(Sokoban.baseState.map, Sokoban.baseState.worker));
-        openNodesReversed = new();
-        GenerateFinalStates(Sokoban.baseState.map, Sokoban.baseState.worker).ForEach(i => openNodesReversed.Add(i));
-        closedNodes = new();
-        closedNodesReversed = new();
     }
 
     private List<State>? NormalIteration()
@@ -74,19 +131,17 @@ class BidirectionalSearch : ISearcher<List<State>>
         HashSet<State> newO = new();
         foreach (var state in openNodes)
         {
-            //statistic.Collect(state, openNodes, closedNodes);
-            
+            statistic.Collect(openNodes, closedNodes);
             closedNodes.Add(state);
             foreach (State s in state.GetGeneratedStates())
             {
                 openNodesReversed.TryGetValue(s, out var item);
-                //if (item == null) { item = closedNodesReversed.GetItem(s); }
                 if (item != null)
                 {
-                    statistic.Print(Searcher.Type.Bidirectional);
-                    List<State> l = item.Unwrap();
+                    List<State> l = item.Unwrap(out statistic.pathLength);
                     l.Reverse();
-                    var res = state.Unwrap();
+                    var res = state.Unwrap(out int secondPathLen);
+                    statistic.pathLength += secondPathLen - 1;
                     res.AddRange(l);
                     return res;
                 }
@@ -106,22 +161,17 @@ class BidirectionalSearch : ISearcher<List<State>>
         HashSet<State> newO = new();
         foreach (var state in openNodesReversed)
         {           
-            //statistic.Collect(state, openNodesReversed, closedNodesReversed);
-
+            statistic.CollectReversed(openNodesReversed, closedNodesReversed);
             closedNodesReversed.Add(state);
             foreach (State s in state.GenerateReversedStates())
             {
-                //if (item == null) {
-                //    item = closedNodes.GetItem(s);
-                //}
                 openNodes.TryGetValue(s, out var item);
-                //if (item == null) { item = closedNodes.GetItem(s); }
                 if (item != null)
                 {
-                    statistic.Print(Searcher.Type.Bidirectional);
-                    List<State> l = state.Unwrap();
+                    List<State> l = state.Unwrap(out statistic.pathLength);
                     l.Reverse();
-                    var res = item.Unwrap();
+                    var res = item.Unwrap(out int secondPathLen);
+                    statistic.pathLength += secondPathLen - 1;
                     res.AddRange(l);
                     return res;
                 }
@@ -136,8 +186,19 @@ class BidirectionalSearch : ISearcher<List<State>>
         return null;
     }
 
-    public List<State>? Search()
+    public List<State>? Search(State begState)
     {
+        printRate = 1;
+        lastFrame = 0;
+
+        statistic = new();
+        map = begState.map;
+
+        openNodes = [new State(map.boxes, map.worker, begState.map)];
+        openNodesReversed = [.. GenerateFinalStates()];
+        closedNodes = new();
+        closedNodesReversed = new();
+
         while (true)
         {
             List<State>? result = null;
@@ -150,49 +211,60 @@ class BidirectionalSearch : ISearcher<List<State>>
                 result = ReversedIteration();
             }
 
-            Console.Clear();
-            Console.WriteLine($"On.count = {openNodes.Count()}");
-            Console.WriteLine($"Or.count = {openNodesReversed.Count()}");
-            Console.WriteLine($"Cn.count = {closedNodes.Count()}");
-            Console.WriteLine($"Cr.count = {closedNodesReversed.Count()}");
-
+            //var newFrame = Raylib.GetTime();
+            //if (newFrame - lastFrame >= printRate || result != null)
+            //{
+            //    Console.Clear();
+            //    Console.WriteLine($"On.count = {openNodes.Count()}");
+            //    Console.WriteLine($"Or.count = {openNodesReversed.Count()}");
+            //    Console.WriteLine($"Cn.count = {closedNodes.Count()}");
+            //    Console.WriteLine($"Cr.count = {closedNodesReversed.Count()}");
+            //    lastFrame = newFrame;
+            //}
 
             if (result != null)
             {
+                //statistic.Print();
                 return result;
             }
         }
-        
+
     }
 
-    private List<State> GenerateFinalStates(Map m, Worker worker)
+    private IEnumerable<State> GenerateFinalStates()
     {
-        Map map = (Map)m.Clone();
-        var states = new List<State>();
-        foreach ((int col, int row) in map.FindBlocks(Sokoban.Block.Box))
+        (byte x, byte y)[] boxes = new (byte x, byte y)[map.boxes.Length];
+
+        var nextBox = 0;
+        foreach ((int col, int row) in map.FindBlocks(Block.Type.Mark))
         {
-            map.SetCell(row, col, (int)Sokoban.Block.Floor);
-        }
-        foreach ((int col, int row) in map.FindBlocks(Sokoban.Block.Mark))
-        {
-            map.SetCell(row, col, (int)Sokoban.Block.BoxOnMark);
+            boxes[nextBox++] = ((byte, byte))(col, row);
         }
 
-        foreach ((int col, int row) in map.FindBlocks(Sokoban.Block.BoxOnMark))
+        foreach (var b in boxes)
         {
             foreach (Worker.Direction direction in Worker.directions)
             {
-                var checkFreeRow = row + direction.GetY();
-                var checkFreeCol = col + direction.GetX();
-                if (map.GetCell(checkFreeRow, checkFreeCol) == (int)Sokoban.Block.Floor || map.GetCell(checkFreeRow, checkFreeCol) == (int)Sokoban.Block.Mark)
+                var checkFreeRow = b.y + direction.GetY();
+                var checkFreeCol = b.x + direction.GetX();
+                if (map.GetCell(checkFreeRow, checkFreeCol, boxes) == (byte)Block.Type.Floor)
                 {
-                    Worker w = (Worker)worker.Clone();
+                    Worker w = (Worker)map.worker.Clone();
                     w.x = checkFreeCol;
                     w.y = checkFreeRow;
-                    states.Add(new State((Map)map.Clone(), w));
+                    yield return new State(((byte, byte)[])boxes.Clone(), w, map);
                 }
             }
         }
-        return states;
+    }
+
+    public int GetIters()
+    {
+        return statistic.iters;
+    }
+
+    public int GetN()
+    {
+        return statistic.maxNodesNum;
     }
 }

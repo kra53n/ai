@@ -1,9 +1,13 @@
 ﻿using System.Collections;
 using System.Runtime.InteropServices;
+using static Sokoban;
+using static System.Net.WebRequestMethods;
 
 interface ISearcher<T>
 {
-    public T? Search();
+    public T? Search(State begState);
+    public int GetIters();
+    public int GetN();
 }
 
 class Searcher : ISearcher<List<State>>
@@ -11,13 +15,13 @@ class Searcher : ISearcher<List<State>>
     public enum Type
     {
         Breadth,
-        Depth,
-        Bidirectional
+        Depth
     };
 
     private ISequence<State> openNodes;
     private ISequence<State> closeNodes;
     private Type type;
+    private Statistic statistic;
 
     public Searcher(Type _type)
     {
@@ -37,18 +41,18 @@ class Searcher : ISearcher<List<State>>
         type = _type;
     }
 
-    public List<State>? Search()
+    public List<State>? Search(State begState)
     {
-        Statistic statistic = new Statistic();
+        statistic = new Statistic();
 
         openNodes.Clear();
         closeNodes.Clear();
-        openNodes.Push(new State(Sokoban.baseState.map, Sokoban.baseState.worker));
+        openNodes.Push(begState);
 
         while (!openNodes.Empty())
         {
             State state = openNodes.Pop();
-            statistic.Collect(state, openNodes, closeNodes);
+            statistic.Collect(openNodes, closeNodes);
             if (state.IsGoal())
             {
                 statistic.Print(type);
@@ -66,43 +70,49 @@ class Searcher : ISearcher<List<State>>
         }
         return null;
     }
+
+    public int GetIters()
+    {
+        return statistic.iters;
+    }
+
+    public int GetN()
+    {
+        return statistic.maxNodesNum;
+    }
 }
 
-partial class State
+public partial class State
 {
-    public Map map;
+    public (byte x, byte y)[] boxes;
     public Worker worker;
     public State? prv;
     public int hash;
+	public Map map;
 
-    public State(Map _map, Worker _worker)
+    public State((byte x, byte y)[] _boxes, Worker _worker, Map? _map)
     {
-        map = _map;
+        boxes = _boxes;
         worker = _worker;
 
-        //var item = (int)Sokoban.Block.Worker;
-        //(item, map.map[worker.y, worker.x]) = (map.map[worker.y, worker.x], item);
-        //char[] str = new char[map.map.Length];
-        //Buffer.BlockCopy(map.map, 0, str, 0, map.map.Length);
-        //hash = new string(str).GetHashCode();
-        //map.map[worker.y, worker.x] = item;
-
-        string str = "";
-        for (int row = 0; row < map.GetRowsNum(); row++)
+        map = _map;
+        if (map == null)
         {
-            for (int col = 0; col < map.GetColsNum(); col++)
+            map = Sokoban.map;
+        }
+        var m = (Map)map.Clone();
+        m.SetCell(worker.y, worker.x, (byte)Block.Type.Worker);
+        foreach (var b in boxes)
+        {
+            m.SetCell(b.y, b.x, (byte)Block.Type.Box);
+        }
+        for (int row = 0; row < m.GetRowsNum(); row++)
+        {
+            for (int col = 0; col < m.GetColsNum(); col++)
             {
-                if (row == worker.y && col == worker.x)
-                {
-                    str += (int)Sokoban.Block.Worker;
-                }
-                else
-                {
-                    str += map.GetCell(row, col);
-                }
+                hash = (hash * 10781 + (int)m.GetCell(row, col));
             }
         }
-        hash = str.GetHashCode();
     }
 
     public override int GetHashCode()
@@ -117,76 +127,79 @@ partial class State
             return false;
         }
         State state = (State)obj;
-        for (int row = 0; row < map.GetRowsNum(); row++)
+        foreach (var b1 in boxes)
         {
-            for (int col = 0; col < map.GetColsNum(); col++)
+            if (!state.boxes.Contains(b1))
             {
-                if (map.GetCell(row, col) != state.map.GetCell(row, col))
-                {
-                    return false;
-                }
+                return false;
             }
         }
         if (worker.x != state.worker.x || worker.y != state.worker.y)
-        { 
-            return false; 
+        {
+            return false;
         }
         return true;
+        //return (obj as State).str == str;
     }
-
-    
 
     public bool IsGoal()
     {
-        return map.Complete();
+        return map.Complete(boxes);
     }
 
-    public List<State> GetGeneratedStates()
+    public virtual IEnumerable<State> GetGeneratedStates()
     {
-        List<State> states = new List<State>();
         foreach (Worker.Direction direction in Worker.directions)
         {
-            Map m = (Map)map.Clone();
+            var b = ((byte, byte)[])boxes.Clone();
             Worker w = (Worker)worker.Clone();
-            w.Move(m, direction);
+            w.Move(direction, b);
             if (w.x != worker.x || w.y != worker.y)
             {
-                states.Add(new State(m, w));
+                var state = new State(b, w, map);
+                yield return state;
             }
         }
-        return states;
     }
 
     public List<State> Unwrap()
     {
+        return Unwrap(out _);
+    }
+
+    public List<State> Unwrap(out int pathLen)
+    {
         List<State> states = new List<State>();
         State? s = this;
+        pathLen = 0;
         while (s != null)
         {
             states.Insert(0, s);
+            pathLen++;
             s = s.prv;
         }
         return states;
     }
 }
 
-class Statistic
+partial class Statistic
 {
-    private int iters = 0;
-    private int currOpenNodesNum = 0;
-    private int maxOpenNodesNum = 0;
-    private int currCloseNodesNum = 0;
-    private int maxCloseNodesNum = 0;
-    private int maxNodesNum = 0;
+    public int iters = 0;
+    protected int currOpenNodesNum = 0;
+    protected int maxOpenNodesNum = 0;
+    protected int currClosedNodesNum = 0;
+    protected int maxClosedNodesNum = 0;
+    public int maxNodesNum = 0;
+    public int pathLength = 0;
 
-    public void Collect(State currState, ISequence<State> openNodes, ISequence<State> closeNodes)
+    public void Collect(ISequence<State> openNodes, ISequence<State> closeNodes)
     {
         iters++;
         currOpenNodesNum = openNodes.Count();
-        currCloseNodesNum = closeNodes.Count();
+        currClosedNodesNum = closeNodes.Count();
         maxOpenNodesNum = Math.Max(maxOpenNodesNum, currOpenNodesNum);
-        maxCloseNodesNum = Math.Max(maxCloseNodesNum, currCloseNodesNum);
-        maxNodesNum = Math.Max(maxNodesNum, currOpenNodesNum + currCloseNodesNum);
+        maxClosedNodesNum = Math.Max(maxClosedNodesNum, currClosedNodesNum);
+        maxNodesNum = Math.Max(maxNodesNum, currOpenNodesNum + currClosedNodesNum);
     }
 
     public void Print(Searcher.Type type)
@@ -200,9 +213,6 @@ class Statistic
             case Searcher.Type.Depth:
                 s += "глубину";
                 break;
-            case Searcher.Type.Bidirectional:
-                s = "Результаты двунаправленного поиска";
-                break;
         }
         s += "\n\n";
         s += $"Итераций: {iters}\n";
@@ -210,8 +220,8 @@ class Statistic
         s += $"\tКоличество при завершении: {currOpenNodesNum}\n";
         s += $"\tМаксимальное количество: {maxOpenNodesNum}\n";
         s += $"Закрыте узлы:\n";
-        s += $"\tКоличество при завершении: {currCloseNodesNum}\n";
-        s += $"\tМаксимальное количество: {maxCloseNodesNum}\n";
+        s += $"\tКоличество при завершении: {currClosedNodesNum}\n";
+        s += $"\tМаксимальное количество: {maxClosedNodesNum}\n";
         s += $"Максимальное количество хранимых в памяти узлов: {maxNodesNum}\n";
         s += "\n";
         Console.WriteLine(s);

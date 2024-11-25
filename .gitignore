@@ -1,8 +1,9 @@
 bin/
 obj/
 .vs/
+measures/
+course
 
 1/sokoban-skins
-/1/measures
 *.doc*
 *.xl*

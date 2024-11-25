@@ -2,16 +2,28 @@ using System.Data;
 
 class DepthFirstSearch : ISearcher<List<State>>
 {
-    // TODO(kra53n): delete *.Clear() in other Search's
-    public List<State>? Search()
+    DepthFirstSearchStatistic statistic;
+
+    public int GetIters()
     {
-        DepthFirstSearchStatistic statistic = new DepthFirstSearchStatistic();
+        return statistic.iters;
+    }
+
+    public int GetN()
+    {
+        return statistic.maxNodesNum;
+    }
+
+    // TODO(kra53n): delete *.Clear() in other Search's
+    public List<State>? Search(State begState)
+    {
+        statistic = new DepthFirstSearchStatistic();
 
         Stack<DepthFirstSearchState> openNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> closedNodes = new Stack<DepthFirstSearchState>();
         Stack<DepthFirstSearchState> nxtOpenNodes = new Stack<DepthFirstSearchState>();
 
-        nxtOpenNodes.Push(new DepthFirstSearchState(Sokoban.baseState.map, Sokoban.baseState.worker, 0));
+        nxtOpenNodes.Push(new DepthFirstSearchState(begState.boxes, begState.worker, begState.map, 0));
 
         for (int lvl = 0; ; lvl++)
         {
@@ -25,13 +37,13 @@ class DepthFirstSearch : ISearcher<List<State>>
                     nxtOpenNodes.Push(state);
                     continue;
                 }
-                statistic.Collect(state, openNodes, closedNodes, lvl);
+                statistic.Collect(openNodes, closedNodes, lvl);
                 if (state.IsGoal())
                 {
-                    statistic.Print();
+                    //statistic.Print();
                     return state.Unwrap();
                 }
-                closedNodes.Push(state);
+                closedNodes.Push(state);    
                 foreach (DepthFirstSearchState s in state.GetGeneratedStates())
                 {
                     if (!openNodes.Contains(s) && !nxtOpenNodes.Contains(s) && !closedNodes.Contains(s))
@@ -49,34 +61,36 @@ class DepthFirstSearchState : State
 {
     public int lvl;
 
-    public DepthFirstSearchState(Map _map, Worker _worker, int _lvl) : base(_map,  _worker)
+    public DepthFirstSearchState((byte x, byte y)[] boxes, Worker _worker, Map map, int _lvl) : base(boxes, _worker, map)
     {
         lvl = _lvl;
     }
 
-    public DepthFirstSearchState(State state, int _lvl) : base(state.map,  state.worker)
+    public DepthFirstSearchState(State state, Map map, int _lvl) : base(state.boxes, state.worker, map)
     {
         lvl = _lvl;
     }
 
-    public new List<DepthFirstSearchState> GetGeneratedStates()
+    public new IEnumerable<DepthFirstSearchState> GetGeneratedStates()
     {
-        List<State> states = base.GetGeneratedStates();
-        return states.Select(s => new DepthFirstSearchState(s, lvl + 1)).ToList();
+        foreach (State s in base.GetGeneratedStates())
+        {
+            yield return new DepthFirstSearchState(s, map, lvl + 1);
+        }
     }
 }
 
 class DepthFirstSearchStatistic
 {
-    private int iters = 0;
+    public int iters = 0;
     private int currOpenNodesNum = 0;
     private int maxOpenNodesNum = 0;
     private int currCloseNodesNum = 0;
     private int maxCloseNodesNum = 0;
-    private int maxNodesNum = 0;
+    public int maxNodesNum = 0;
     private int currLvl;
 
-    public void Collect(State currState, Stack<DepthFirstSearchState> openNodes, Stack<DepthFirstSearchState> closeNodes, int lvl)
+    public void Collect(Stack<DepthFirstSearchState> openNodes, Stack<DepthFirstSearchState> closeNodes, int lvl)
     {
         iters++;
         currOpenNodesNum = openNodes.Count();
