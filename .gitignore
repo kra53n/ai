@@ -3,3 +3,6 @@ obj/
 .vs/
 
 1/sokoban-skins
+/1/measures
+*.doc*
+*.xl*
