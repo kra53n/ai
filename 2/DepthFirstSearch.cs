@@ -25,7 +25,7 @@ class DepthFirstSearch : ISearcher<List<State>>
 
         nxtOpenNodes.Push(new DepthFirstSearchState(begState.boxes, begState.worker, begState.map, 0));
 
-        for (int lvl = 0; ; lvl++)
+        for (int lvl = 0; nxtOpenNodes.Count != 0 ; lvl++)
         {
             openNodes = nxtOpenNodes;
             nxtOpenNodes = new Stack<DepthFirstSearchState>();
@@ -40,8 +40,9 @@ class DepthFirstSearch : ISearcher<List<State>>
                 statistic.Collect(openNodes, closedNodes, lvl);
                 if (state.IsGoal())
                 {
-                    //statistic.Print();
-                    return state.Unwrap();
+                    var result = state.Unwrap(out statistic.pathLength);
+                    statistic.Print();
+                    return result;
                 }
                 closedNodes.Push(state);    
                 foreach (DepthFirstSearchState s in state.GetGeneratedStates())
@@ -54,6 +55,8 @@ class DepthFirstSearch : ISearcher<List<State>>
                 }
             }
         }
+        statistic.Print();
+        return null;
     }
 }
 
@@ -89,6 +92,7 @@ class DepthFirstSearchStatistic
     private int maxCloseNodesNum = 0;
     public int maxNodesNum = 0;
     private int currLvl;
+    public int pathLength = 0;
 
     public void Collect(Stack<DepthFirstSearchState> openNodes, Stack<DepthFirstSearchState> closeNodes, int lvl)
     {
@@ -105,6 +109,7 @@ class DepthFirstSearchStatistic
     {
         string s = "\n\tРезультат поиска с итеративным углублением ";
         s += "\n\n";
+        s += $"Длина пути: {pathLength}\n";
         s += $"Итераций: {iters}\n";
         s += $"Уровень: {currLvl}\n";
         s += $"Открытые узлы:\n";
