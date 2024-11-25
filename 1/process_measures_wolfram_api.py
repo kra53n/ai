@@ -3,6 +3,7 @@ import wolframalpha as wa
 from collections import defaultdict
 import asyncio
 import datetime
+import os
 
 
 p = Path("measures")
@@ -11,7 +12,7 @@ searches = ("breadth", "depth", "depth_iterative", "bidirectional", "heuristic1"
 searches = { key: { 'iters' : [0]*len(ds), 'Ns' : [0]*len(ds), 'bs' : [0]*len(ds)} for key in searches }
 maps = tuple(range(1, 11))
 
-app_id = getfixture('APP_ID')
+app_id = os.environ["WOLF_APP"]
 client = wa.Client(app_id)
 
 for search, val in searches.items():
