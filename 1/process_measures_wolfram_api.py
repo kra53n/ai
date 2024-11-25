@@ -9,7 +9,7 @@ import os
 p = Path("measures")
 ds = (2, 7, 12, 17, 22)
 searches = ("breadth", "depth", "depth_iterative", "bidirectional", "heuristic1", "heuristic2", "heuristic3")
-searches = { key: { 'iters' : [0]*len(ds), 'Ns' : [0]*len(ds), 'bs' : [0]*len(ds)} for key in searches }
+searches = {key: {'iters': [0]*len(ds), 'Ns': [0]*len(ds), 'bs': [0]*len(ds)} for key in searches}
 maps = tuple(range(1, 11))
 
 app_id = os.environ["WOLF_APP"]
@@ -33,10 +33,7 @@ for search, val in searches.items():
 
 async def calc_b(b_list, N, d):
     try:
-        res = await client.aquery(f'N[{N}+1=Sum[b^n,{{n,0,{d}}}]]', params=[
-            ("scanner", "Reduce"),
-            ('format', 'plaintext')
-        ])
+        res = await client.aquery(f'N[{N}=Sum[b^n,{{n,0,{d}}}]]', params=[("scanner", "Reduce"), ('format', 'plaintext')])
         for pod in res.pods:
             if pod['@id'] not in ('Solution', 'RealSolution'):
                 continue
