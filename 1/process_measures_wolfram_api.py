@@ -27,8 +27,8 @@ for search, val in searches.items():
                 maps_count[d_index] += 1
             except FileNotFoundError:
                 continue
-    val['iters'] = [f'{float(v) / maps_count[i]:.3f}' for i, v in enumerate(val['iters'])]
-    val['Ns'] = [f'{float(v) / maps_count[i]:.3f}' for i, v in enumerate(val['Ns'])]
+    val['iters'] = [f'{float(v) / i:.3f}' for i, v in zip(maps_count, val['iters'])]
+    val['Ns'] = [f'{float(v) / i:.3f}' for i, v in zip(maps_count, val['Ns'])]
 
 
 async def calc_b(b_list, N, d):
