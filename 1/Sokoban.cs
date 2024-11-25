@@ -315,7 +315,7 @@ class Sokoban
         }
         if (Raylib.IsKeyPressed(KeyboardKey.M))
         {
-            Raylib.SetWindowTitle("Is measured");
+            Raylib.SetWindowTitle("Measuring");
             Measures.Do();
             Raylib.SetWindowTitle("Measured");
         }

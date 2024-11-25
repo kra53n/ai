@@ -23,14 +23,17 @@ class Measures
         Directory.CreateDirectory("../../../measures");
         Parallel.ForEach(Directory.GetFiles("../../../levels-course"), filename =>
         {
-            Map map = new(0, 0);
-            map.Load(Sokoban.LoadMapContentFromFile(filename));
-            Parallel.ForEach(searches, kv =>
+            if (filename.EndsWith(".txt"))
             {
-                var search = kv.factory();
-                search.Search(new State(map.boxes, map.worker, map));
-                WriteMeasureToFile(kv.name, Path.GetFileName(filename), search);
-            });
+                Map map = new(0, 0);
+                map.Load(Sokoban.LoadMapContentFromFile(filename));
+                Parallel.ForEach(searches, kv =>
+                {
+                    var search = kv.factory();
+                    search.Search(new State(map.boxes, map.worker, map));
+                    WriteMeasureToFile(kv.name, Path.GetFileName(filename), search);
+                });
+            }
         });
     }
 
