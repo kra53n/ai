@@ -124,7 +124,7 @@ public class InformedSearch : ISearcher<List<State>>
             if (curr.f - curr.g == 0)
             {
                 statistic.pathLength = curr.g;
-                statistic.Print();
+                //statistic.Print();
                 return curr.Unwrap();
             }
             statistic.Collect(openNodes, closedNodes);
@@ -171,6 +171,7 @@ public class InformedSearch : ISearcher<List<State>>
             //    lastFrame = newFrame;
             //}
         }
+        //statistic.Print();
         return null;
     }
 
@@ -273,51 +274,24 @@ public class InformedSearch : ISearcher<List<State>>
 
     static public int HorribleHeuristic(State state)
     {
-        (byte x, byte y) nearestBox = (0, 0);
         (byte x, byte y)[] marks = state.map.marks;
-        var boxOnMarks = Enumerable.Repeat(false, marks.Length).ToArray();
-        int min = int.MaxValue;
-        for (int i = 0; i < state.boxes.Length; i++)
+        int res = 0;
+        foreach (var b in state.boxes)
         {
-            var b = state.boxes[i];
-            bool skip = false;
-            for (int j = 0; j < marks.Length; j++)
-            {
-                var m = marks[j];
-                if (b == m)
-                {
-                    skip = true;
-                    boxOnMarks[j] = true;
-                    break;
-                }
-            }
-            if (skip)
+            if (marks.Contains(b))
             {
                 continue;
             }
-            int dist = Sphere.Dist(((byte)state.worker.x, (byte)state.worker.y), (b.x, b.y));
-
-            if (min > dist)
-            {
-                min = dist;
-                nearestBox = b;
-            }
+            res += Sphere.Dist(((byte)state.worker.x, (byte)state.worker.y), (b.x, b.y)) - 1;
         }
-
-        if (boxOnMarks.All(x => x == true))
-        {
-            return 0;
-        }
-
-        int res = min - 1;
         foreach ((byte x, byte y) b in state.boxes)
         {
-            List<int> dists = new();
+            int min = int.MaxValue;
             foreach ((byte x, byte y) m in marks)
             {
-                dists.Add(Sphere.Dist((m.x, m.y), (b.x, b.y)));
+                min = Math.Min(min, Sphere.Dist((m.x, m.y), (b.x, b.y)));
             }
-            res += dists.Min();
+            res += min;
         }
         return res;
     }
