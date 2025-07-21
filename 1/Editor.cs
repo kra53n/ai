@@ -1,5 +1,5 @@
-﻿using Raylib_cs;
 using System.Collections;
+using Raylib_cs;
 using System.Data;
 using System.Diagnostics;
 using System.Numerics;
@@ -99,7 +99,7 @@ public class Editor
             {
                 var level = GetLevel();
                 if (level != null)
-                { 
+                {
                     var filter = new FileFilter(".txt files", ["*.txt"]);
                     if (!savePath.EndsWith(".txt"))
                     {

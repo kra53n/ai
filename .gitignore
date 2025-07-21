@@ -2,6 +2,7 @@ bin/
 obj/
 .vs/
 measures/
+course
 
 1/sokoban-skins
 *.doc*
