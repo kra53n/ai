@@ -1,4 +1,5 @@
 using System.Data;
+using System.Runtime.InteropServices;
 
 class DepthFirstSearch : ISearcher<List<State>>
 {
@@ -15,7 +16,7 @@ class DepthFirstSearch : ISearcher<List<State>>
     }
 
     // TODO(kra53n): delete *.Clear() in other Search's
-    public List<State>? Search(State begState)
+    public List<State>? Search(State begState, bool print = false)
     {
         statistic = new DepthFirstSearchStatistic();
 
@@ -40,9 +41,11 @@ class DepthFirstSearch : ISearcher<List<State>>
                 statistic.Collect(openNodes, closedNodes, lvl);
                 if (state.IsGoal())
                 {
-                    var result = state.Unwrap(out statistic.pathLength);
-                    statistic.Print();
-                    return result;
+                    if (print)
+                    {
+                        statistic.Print();
+                    }
+                    return state.Unwrap();
                 }
                 closedNodes.Push(state);    
                 foreach (DepthFirstSearchState s in state.GetGeneratedStates())

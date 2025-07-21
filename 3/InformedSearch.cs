@@ -104,7 +104,7 @@ public class InformedSearch : ISearcher<List<State>>
         h = heuristicFunc;
     }
 
-    public List<State>? Search(State begState)
+    public List<State>? Search(State begState, bool print = false)
     {
         printRate = 1;
         lastFrame = 0;
@@ -124,7 +124,10 @@ public class InformedSearch : ISearcher<List<State>>
             if (curr.f - curr.g == 0)
             {
                 statistic.pathLength = curr.g;
-                statistic.Print();
+                if (print)
+                {
+                    statistic.Print();
+                }
                 return curr.Unwrap();
             }
             statistic.Collect(openNodes, closedNodes);
@@ -162,14 +165,17 @@ public class InformedSearch : ISearcher<List<State>>
                 state.prv = curr;
                 openNodes.Add(state);
             }
-            //var newFrame = Raylib.GetTime();
-            //if (newFrame - lastFrame >= printRate)
-            //{
-            //    Console.Clear();
-            //    Console.WriteLine($"On.count = {openNodes.Count()}");
-            //    Console.WriteLine($"Cn.count = {closedNodes.Count()}");
-            //    lastFrame = newFrame;
-            //}
+            if (print)
+            {
+                var newFrame = Raylib.GetTime();
+                if (newFrame - lastFrame >= printRate)
+                {
+                    Console.Clear();
+                    Console.WriteLine($"On.count = {openNodes.Count()}");
+                    Console.WriteLine($"Cn.count = {closedNodes.Count()}");
+                    lastFrame = newFrame;
+                }
+            }
         }
         //statistic.Print();
         return null;

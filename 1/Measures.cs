@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,10 +24,22 @@ class Measures
         Directory.CreateDirectory("../../../measures");
         Parallel.ForEach(Directory.GetFiles("../../../levels-course"), filename =>
         {
+            Map map = new(0, 0);
+            bool isLoaded = true;
             if (filename.EndsWith(".txt"))
             {
-                Map map = new(0, 0);
-                map.Load(Sokoban.LoadMapContentFromFile(filename));
+                try
+                {
+                    map.Load(Sokoban.LoadMapContentFromFile(filename));
+                }
+                catch (Exception ex)
+                {
+                    isLoaded = false;
+                }
+                
+            }
+            if (isLoaded)
+            {
                 Parallel.ForEach(searches, kv =>
                 {
                     var search = kv.factory();
