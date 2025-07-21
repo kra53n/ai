@@ -1,11 +1,8 @@
 ﻿using System.Collections;
-using System.Runtime.InteropServices;
-using static Sokoban;
-using static System.Net.WebRequestMethods;
 
 interface ISearcher<T>
 {
-    public T? Search(State begState);
+    public T? Search(State begState, bool print = false);
     public int GetIters();
     public int GetN();
 }
@@ -41,7 +38,7 @@ class Searcher : ISearcher<List<State>>
         type = _type;
     }
 
-    public List<State>? Search(State begState)
+    public List<State>? Search(State begState, bool print)
     {
         statistic = new Statistic();
 
@@ -55,7 +52,10 @@ class Searcher : ISearcher<List<State>>
             statistic.Collect(openNodes, closeNodes);
             if (state.IsGoal())
             {
-                //statistic.Print(type);
+                if (print)
+                {
+                    statistic.Print(type);
+                }
                 return state.Unwrap();
             }
             closeNodes.Push(state);

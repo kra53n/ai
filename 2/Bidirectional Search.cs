@@ -186,7 +186,7 @@ class BidirectionalSearch : ISearcher<List<State>>
         return null;
     }
 
-    public List<State>? Search(State begState)
+    public List<State>? Search(State begState, bool print = false)
     {
         printRate = 1;
         lastFrame = 0;
@@ -211,20 +211,26 @@ class BidirectionalSearch : ISearcher<List<State>>
                 result = ReversedIteration();
             }
 
-            //var newFrame = Raylib.GetTime();
-            //if (newFrame - lastFrame >= printRate || result != null)
-            //{
-            //    Console.Clear();
-            //    Console.WriteLine($"On.count = {openNodes.Count()}");
-            //    Console.WriteLine($"Or.count = {openNodesReversed.Count()}");
-            //    Console.WriteLine($"Cn.count = {closedNodes.Count()}");
-            //    Console.WriteLine($"Cr.count = {closedNodesReversed.Count()}");
-            //    lastFrame = newFrame;
-            //}
+            if (print)
+            {
+                var newFrame = Raylib.GetTime();
+                if (newFrame - lastFrame >= printRate || result != null)
+                {
+                    Console.Clear();
+                    Console.WriteLine($"On.count = {openNodes.Count()}");
+                    Console.WriteLine($"Or.count = {openNodesReversed.Count()}");
+                    Console.WriteLine($"Cn.count = {closedNodes.Count()}");
+                    Console.WriteLine($"Cr.count = {closedNodesReversed.Count()}");
+                    lastFrame = newFrame;
+                }
+            }
 
             if (result != null)
             {
-                //statistic.Print();
+                if (print)
+                {
+                    statistic.Print();
+                }
                 return result;
             }
         }

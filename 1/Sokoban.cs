@@ -152,7 +152,7 @@ class Sokoban
         Sokoban.searchMethod = searchMethod;
         Raylib.SetWindowTitle($"Осуществляется {searchMethod}");
         currStateIdx = 0;
-        states = searcher.Search(new State(baseState.boxes, baseState.worker, map));
+        states = searcher.Search(new State(baseState.boxes, baseState.worker, map), true);
         Raylib.SetWindowTitle($"{char.ToUpper(searchMethod[0]) + searchMethod.Substring(1)} завершён");
     }
 
@@ -315,7 +315,7 @@ class Sokoban
         }
         if (Raylib.IsKeyPressed(KeyboardKey.M))
         {
-            Raylib.SetWindowTitle("Is measured");
+            Raylib.SetWindowTitle("Currently measuring");
             Measures.Do();
             Raylib.SetWindowTitle("Measured");
         }
