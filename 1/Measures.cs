@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,13 +25,28 @@ class Measures
         Parallel.ForEach(Directory.GetFiles("../../../levels-course"), filename =>
         {
             Map map = new(0, 0);
-            map.Load(Sokoban.LoadMapContentFromFile(filename));
-            Parallel.ForEach(searches, kv =>
+            bool isLoaded = true;
+            if (filename.EndsWith(".txt"))
             {
-                var search = kv.factory();
-                search.Search(new State(map.boxes, map.worker, map));
-                WriteMeasureToFile(kv.name, Path.GetFileName(filename), search);
-            });
+                try
+                {
+                    map.Load(Sokoban.LoadMapContentFromFile(filename));
+                }
+                catch (Exception ex)
+                {
+                    isLoaded = false;
+                }
+                
+            }
+            if (isLoaded)
+            {
+                Parallel.ForEach(searches, kv =>
+                {
+                    var search = kv.factory();
+                    search.Search(new State(map.boxes, map.worker, map));
+                    WriteMeasureToFile(kv.name, Path.GetFileName(filename), search);
+                });
+            }
         });
     }
 
