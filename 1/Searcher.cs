@@ -68,6 +68,7 @@ class Searcher : ISearcher<List<State>>
                 }
             }
         }
+        statistic.Print(type);
         return null;
     }
 
@@ -171,7 +172,7 @@ public partial class State
     {
         List<State> states = new List<State>();
         State? s = this;
-        pathLen = 0;
+        pathLen = -1;
         while (s != null)
         {
             states.Insert(0, s);
@@ -215,6 +216,7 @@ partial class Statistic
                 break;
         }
         s += "\n\n";
+        s += $"Длина пути: {pathLength}\n";
         s += $"Итераций: {iters}\n";
         s += $"Открытые узлы:\n";
         s += $"\tКоличество при завершении: {currOpenNodesNum}\n";

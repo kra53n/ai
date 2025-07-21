@@ -141,7 +141,7 @@ class BidirectionalSearch : ISearcher<List<State>>
                     List<State> l = item.Unwrap(out statistic.pathLength);
                     l.Reverse();
                     var res = state.Unwrap(out int secondPathLen);
-                    statistic.pathLength += secondPathLen - 1;
+                    statistic.pathLength += secondPathLen + 1;
                     res.AddRange(l);
                     return res;
                 }
@@ -171,7 +171,7 @@ class BidirectionalSearch : ISearcher<List<State>>
                     List<State> l = state.Unwrap(out statistic.pathLength);
                     l.Reverse();
                     var res = item.Unwrap(out int secondPathLen);
-                    statistic.pathLength += secondPathLen - 1;
+                    statistic.pathLength += secondPathLen + 1;
                     res.AddRange(l);
                     return res;
                 }
@@ -202,7 +202,7 @@ class BidirectionalSearch : ISearcher<List<State>>
         while (true)
         {
             List<State>? result = null;
-            if (openNodes.Count < openNodesReversed.Count)
+            if (openNodes.Count < openNodesReversed.Count || openNodesReversed.Count == 0)
             {
                 result = NormalIteration();
             }
@@ -232,6 +232,11 @@ class BidirectionalSearch : ISearcher<List<State>>
                     statistic.Print();
                 }
                 return result;
+            }
+            if (openNodes.Count == 0 && openNodesReversed.Count == 0)
+            {
+                //statistic.Print();
+                return null;
             }
         }
 

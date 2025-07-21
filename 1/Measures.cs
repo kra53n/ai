@@ -12,13 +12,13 @@ class Measures
     public static void Do()
     {
         (string name, Func<ISearcher<List<State>>> factory)[] searches = {
-            ("breadth", () => new Searcher(Searcher.Type.Breadth)),
-            ("depth", () => new Searcher(Searcher.Type.Depth)),
-            ("depth_iterative", () => new DepthFirstSearch()),
+            //("breadth", () => new Searcher(Searcher.Type.Breadth)),
+            //("depth", () => new Searcher(Searcher.Type.Depth)),
+            //("depth_iterative", () => new DepthFirstSearch()),
             //("bidirectional", () => new BidirectionalSearch()),
-            ("heuristic1", () => new InformedSearch(InformedSearch.MidHeuristic, "mid")),
+            //("heuristic1", () => new InformedSearch(InformedSearch.MidHeuristic, "mid")),
             //("heuristic2", () => new InformedSearch(InformedSearch.BetterHeuristic, "получше")),
-            //("heuristic3", () => new InformedSearch(InformedSearch.HorribleHeuristic, "худшего")),
+            ("heuristic3", () => new InformedSearch(InformedSearch.HorribleHeuristic, "худшего"))
         };
 
         Directory.CreateDirectory("../../../measures");

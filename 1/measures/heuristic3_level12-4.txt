@@ -1,2 +1,2 @@
-iters 198
-N 420
+iters 45
+N 96

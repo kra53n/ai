@@ -3,15 +3,16 @@ import wolframalpha as wa
 from collections import defaultdict
 import asyncio
 import datetime
+import os
 
 
 p = Path("measures")
 ds = (2, 7, 12, 17, 22)
 searches = ("breadth", "depth", "depth_iterative", "bidirectional", "heuristic1", "heuristic2", "heuristic3")
-searches = { key: { 'iters' : [0]*len(ds), 'Ns' : [0]*len(ds), 'bs' : [0]*len(ds)} for key in searches }
+searches = {key: {'iters': [0]*len(ds), 'Ns': [0]*len(ds), 'bs': [0]*len(ds)} for key in searches}
 maps = tuple(range(1, 11))
 
-app_id = getfixture('APP_ID')
+app_id = os.environ["WOLF_APP"]
 client = wa.Client(app_id)
 
 for search, val in searches.items():
@@ -26,16 +27,13 @@ for search, val in searches.items():
                 maps_count[d_index] += 1
             except FileNotFoundError:
                 continue
-    val['iters'] = [f'{float(v) / maps_count[i]:.3f}' for i, v in enumerate(val['iters'])]
-    val['Ns'] = [f'{float(v) / maps_count[i]:.3f}' for i, v in enumerate(val['Ns'])]
+    val['iters'] = [f'{float(v) / i:.3f}' for i, v in zip(maps_count, val['iters'])]
+    val['Ns'] = [f'{float(v) / i:.3f}' for i, v in zip(maps_count, val['Ns'])]
 
 
 async def calc_b(b_list, N, d):
     try:
-        res = await client.aquery(f'N[{N}+1=Sum[b^n,{{n,0,{d}}}]]', params=[
-            ("scanner", "Reduce"),
-            ('format', 'plaintext')
-        ])
+        res = await client.aquery(f'N[{N}=Sum[b^n,{{n,0,{d}}}]]', params=[("scanner", "Reduce"), ('format', 'plaintext')])
         for pod in res.pods:
             if pod['@id'] not in ('Solution', 'RealSolution'):
                 continue
